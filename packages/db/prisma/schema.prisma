@@ -1,0 +1,165 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  moduleFormat = "cjs"
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  engineType   = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// --- Application models based on user's specification ---
+
+enum SessionType {
+  practice @map("practice")
+  company  @map("company")
+}
+
+enum SessionStatus {
+  created     @map("created")
+  in_progress @map("in_progress")
+  completed   @map("completed")
+}
+
+enum DifficultyLevel {
+  introductory @map("introductory")
+  medium       @map("medium")
+  advanced     @map("advanced")
+}
+
+enum QuestionType {
+  conceptual @map("conceptual")
+  practical  @map("practical")
+  design     @map("design")
+}
+
+model User {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @map("id") @db.Uuid
+  email         String   @unique @db.VarChar(255)
+  passwordHash  String   @map("password_hash") @db.VarChar(255)
+  emailVerified Boolean  @default(false) @map("email_verified")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  profile           Profile?
+  roleMatches       RoleMatch[]        @relation("candidate_role_matches")
+  gapReports        GapReport[]
+  interviewsessions InterviewSession[]
+  refreshTokens     RefreshToken[]
+
+  @@map("users")
+}
+
+model Profile {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String    @unique @map("user_id") @db.Uuid
+  githubUsername   String?   @map("github_username") @db.VarChar(100)
+  resumeFileUrl    String?   @map("resume_file_url") @db.Text
+  githubAnalyzedAt DateTime? @map("github_analyzed_at")
+  resumeParsedAt   DateTime? @map("resume_parsed_at")
+  graphBuiltAt     DateTime? @map("graph_built_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("profiles")
+}
+
+model Role {
+  id              Int      @id @default(autoincrement()) @db.Integer
+  slug            String   @unique @db.VarChar(100) @map("slug")
+  title           String   @db.VarChar(255)
+  description     String?
+  requiredSkills  Json?
+  preferredSkills Json?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  roleMatches RoleMatch[]
+  gapReports  GapReport[]
+  sessions    InterviewSession[]
+
+  @@map("roles")
+}
+
+model RoleMatch {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  candidateId        String   @map("candidate_id") @db.Uuid
+  roleId             Int      @map("role_id")
+  compatibilityScore Int?     @map("compatibility_score") @db.SmallInt
+  matchedSkills      Json?    @map("matched_skills")
+  missingSkills      Json?    @map("missing_skills")
+  computedAt         DateTime @default(now()) @map("computed_at")
+
+  candidate User @relation("candidate_role_matches", fields: [candidateId], references: [id])
+  role      Role @relation(fields: [roleId], references: [id])
+
+  @@unique([candidateId, roleId])
+  @@map("role_matches")
+}
+
+model GapReport {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  candidateId   String   @map("candidate_id") @db.Uuid
+  roleId        Int      @map("role_id")
+  gaps          Json
+  priorityOrder Json     @map("priority_order")
+  generatedAt   DateTime @default(now()) @map("generated_at")
+  expiresAt     DateTime @default(dbgenerated("now() + interval '24 hours'")) @map("expires_at")
+
+  candidate User @relation(fields: [candidateId], references: [id])
+  role      Role @relation(fields: [roleId], references: [id])
+
+  @@unique([candidateId, roleId])
+  @@map("gap_reports")
+}
+
+model InterviewSession {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  candidateId String        @map("candidate_id") @db.Uuid
+  roleId      Int           @map("role_id")
+  sessionType SessionType   @map("session_type")
+  status      SessionStatus @map("status")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  completedAt DateTime?     @map("completed_at")
+
+  candidate User                @relation(fields: [candidateId], references: [id])
+  role      Role                @relation(fields: [roleId], references: [id])
+  questions InterviewQuestion[] @relation("session_questions")
+
+  @@map("interview_sessions")
+}
+
+model InterviewQuestion {
+  id           String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId    String          @map("session_id") @db.Uuid
+  sequence     Int             @db.SmallInt
+  topic        String?         @db.VarChar(100)
+  difficulty   DifficultyLevel
+  questionText String          @map("question_text")
+  questionType QuestionType    @map("question_type")
+  targetSkill  String?         @map("target_skill") @db.VarChar(100)
+  answerText   String?         @map("answer_text")
+  answeredAt   DateTime?       @map("answered_at")
+
+  session InterviewSession @relation("session_questions", fields: [sessionId], references: [id])
+
+  @@map("interview_questions")
+}
+
+model RefreshToken {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  tokenHash String   @unique @map("token_hash") @db.VarChar(255)
+  expiresAt DateTime @map("expires_at")
+  revoked   Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("refresh_tokens")
+}

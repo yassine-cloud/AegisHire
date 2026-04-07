@@ -1,444 +1,330 @@
-# 🧠 PROJECT NAME (Proposal)
-
-## **AegisHire — Autonomous AI HR & Technical Interview Intelligence Platform**
+# 🧠 AegisHire — AI-Powered Technical Hiring & Career Intelligence Platform
 
 ---
 
-# 1️⃣ Executive Vision
+## 1️⃣ Executive Vision
 
-AegisHire is a **multi-agent AI HR platform powered by MCP Server**, designed to:
+AegisHire is a **multi-agent AI platform powered by MCP Server**, designed to serve both sides of the hiring equation:
 
-* Automatically evaluate developer candidates
-* Generate personalized interview questions from real Git repositories
-* Detect AI-assisted cheating during interviews
-* Monitor and auto-patch enterprise applications using AI
-* Provide strictness levels depending on enterprise plan
-* Offer enterprise HR analytics
-* Maintain audit transparency
+**For candidates**, it acts as a personal career mirror — evaluate your real technical profile, discover roles that match your actual skills, and walk into any interview prepared.
 
-This is not just an interview app.
-This is an **AI-powered Technical Hiring Infrastructure**.
+**For companies**, it acts as a hiring intelligence layer — analyze candidates deeply, generate adaptive interviews, and make explainable, bias-aware hiring decisions.
 
----
+> This is not just an interview app. This is an **AI-powered Technical Hiring Infrastructure** — built for everyone in the hiring funnel.
 
-# 2️⃣ Core Functional Domains
+Core capabilities:
 
-## 🔹 A. Candidate Intelligence Engine
-
-The system:
-
-* Connects to GitHub / GitLab
-* Analyzes repositories
-* Extracts:
-
-  * Tech stack
-  * Code complexity
-  * Architecture style
-  * Commit patterns
-  * Testing practices
-  * Security awareness
-* Builds a **Developer Skill Graph**
-
-Then:
-
-* Generates personalized interview questions
-* Adapts difficulty dynamically
+- Evaluate developer candidates from real Git repositories, resumes, and LinkedIn profiles
+- Build a personalized Developer Skill Graph per candidate
+- Match candidates to job roles based on deep skill compatibility
+- Generate adaptive, personalized interview questions
+- Detect AI-assisted cheating during live interviews
+- Provide explainable, bias-aware scoring for both candidates and HR teams
+- Maintain full audit transparency
 
 ---
 
-## 🔹 B. Live AI Interview System
+## 2️⃣ Core Functional Domains
 
-Includes:
+### 🔹 A. Candidate Intelligence Engine
 
-### 1️⃣ Smart Code Editor
+The foundation of the platform. Works for both self-evaluating candidates and company-assessed applicants.
 
-* Monitored typing behavior
-* Copy-paste detection
-* AI-style pattern detection (LLM fingerprinting heuristics)
-* Suspicious latency analysis
+The system accepts:
 
-Flags:
+- GitHub / GitLab profile (repositories, commit history)
+- Resume (PDF or text)
+- LinkedIn profile URL
 
-* Possible AI-generated answers
-* Possible plagiarism
-* External assistance pattern
+From these, it extracts and cross-references:
+
+- Tech stack and depth of experience per technology
+- Code complexity and architecture style
+- Commit patterns and consistency
+- Testing practices and security awareness
+- Stated experience vs. demonstrated experience (resume vs. repo gap analysis)
+
+All of this is compiled into a **Developer Skill Graph** — a structured, weighted map of what the candidate actually knows and where the gaps are.
 
 ---
 
-### 2️⃣ Voice & Meeting Monitoring
+### 🔹 B. Role Matching & Recommendation System
+
+A candidate-facing feature that turns the Skill Graph into actionable career intelligence.
+
+**Matching flow:**
+
+1. Candidate submits their profile (repos + resume + LinkedIn)
+2. System builds their Skill Graph
+3. Candidate either:
+   - Browses available roles and gets a **compatibility score** (0–100%) per role, or
+   - Pastes a specific job description to get an instant match analysis
+
+**If the compatibility score is below a defined threshold:**
+
+The system does not just say "you're not a fit." It generates a **Gap Report** that explains:
+
+- Which required skills are missing or underdeveloped
+- How significant each gap is relative to the role
+- Concrete, prioritized recommendations to close those gaps (specific technologies, project types, learning paths)
+
+This turns rejection into a roadmap.
+
+---
+
+### 🔹 C. Live AI Interview System
+
+Activated once a candidate is invited to an interview — either self-initiated (practice mode) or by a company.
+
+#### 1️⃣ Smart Code Editor
+
+- Monitored typing behavior and keystroke rhythm
+- Copy-paste detection
+- AI-style pattern detection (LLM fingerprinting heuristics)
+- Suspicious latency analysis
+
+Flags (probabilistic, never binary):
+
+- Possible AI-generated answers
+- Possible plagiarism
+- External assistance patterns
+
+All flags contribute to a **Risk Probability Index (0–100%)** — never a hard pass/fail verdict.
+
+---
+
+#### 2️⃣ Voice & Meeting Monitoring _(Enterprise tier / explicit consent required)_
 
 Using:
 
-* Whisper (speech-to-text)
-* Voice analysis tools
-* Behavioral signals
+- Whisper (speech-to-text)
+- Voice analysis tools
+- Behavioral signals
 
-Detect:
+Detects:
 
-* Long unnatural pauses
-* Voice switching
-* Reading from external source
-* Eye direction analysis (if webcam allowed)
-* Unusual keystroke rhythm
+- Long unnatural pauses
+- Voice switching
+- Patterns consistent with reading from an external source
+- Unusual keystroke rhythm during spoken responses
 
-⚠ Important: This part enters serious legal territory.
-
----
-
-## 🔹 C. AI Code Auditing & Runtime Patch Agent
-
-This is the most ambitious part.
-
-Flow:
-
-1. Developer pushes commit.
-2. AI Agent:
-
-   * Reviews code.
-   * Detects vulnerabilities.
-   * Identifies performance issues.
-3. If severe issue:
-
-   * Auto-patches the **running instance**.
-   * Logs modification.
-   * Notifies developer.
-   * Requires human validation next commit.
-
-This is essentially:
-
-> AI Runtime Guardian Agent
-
-This must be implemented carefully (see Risks section).
+⚠ This module requires explicit candidate consent and is only available under enterprise plans. Legal compliance (GDPR and regional regulations) must be enforced before activation.
 
 ---
 
-## 🔹 D. Enterprise HR Intelligence Dashboard
+### 🔹 D. HR Intelligence Dashboard _(Company-facing)_
 
-Enterprises can:
+Companies using AegisHire can:
 
-* Select AI strictness level
-* View cheating probability index
-* View candidate technical radar chart
-* Access historical interviews
-* Compare candidates
-* Access AI explanations
-
----
-
-## 🔹 E. Internal Enterprise Mode
-
-Normal users inside company:
-
-* Access past meetings
-* Navigate org data
-* Search interview history
-* Knowledge base access
+- Configure AI strictness level per interview session
+- View each candidate's technical radar chart and Skill Graph
+- Access the cheating Risk Probability Index with full reasoning
+- Compare candidates side by side
+- Browse historical interviews and audit logs
+- Access AI-generated explanations for every score and decision
 
 ---
 
-# 3️⃣ MCP Multi-Agent Architecture
+### 🔹 E. Candidate Self-Assessment Mode _(Individual-facing)_
 
-You will use MCP Server as orchestration layer.
+Any user — not just company-referred candidates — can:
 
-## 🎯 Core Agents
+- Connect their GitHub/GitLab and upload their resume
+- Receive a full Skill Graph and career snapshot
+- Browse role recommendations matched to their profile
+- Run a compatibility check against any job description
+- Enter a practice interview to self-evaluate before a real one
+- Track skill progression over time
 
-### 1️⃣ Repository Analysis Agent
-
-* Parses Git repos
-* Extracts metadata
-* Generates skill graph nodes (Neo4j)
-
-### 2️⃣ Interview Generation Agent
-
-* Generates adaptive questions
-* Context aware
-
-### 3️⃣ Live Monitoring Agent
-
-* Code typing behavior monitor
-* AI suspicion scoring
-
-### 4️⃣ Voice & Behavior Agent
-
-* Speech transcription
-* Behavioral anomaly detection
-
-### 5️⃣ Runtime Patch Agent (Critical)
-
-* Security vulnerability detection
-* Hot patching
-* Rollback management
-
-### 6️⃣ Audit Transparency Agent
-
-* Logs all AI modifications
-* Ensures explainability
-
-### 7️⃣ Risk & Bias Evaluation Agent
-
-* Detects bias in evaluation
+This mode is the key differentiator from traditional HR-only platforms. The candidate owns their data and uses it to grow.
 
 ---
 
-# 4️⃣ Technical Architecture
+## 3️⃣ MCP Multi-Agent Architecture
 
-## 🔹 Backend Core
+MCP Server acts as the orchestration layer across all agents.
 
-* **NestJS** → API Gateway
-* Python → AI services (LangGraph / LangChain)
-* Rust (RIG Agent) → High-performance runtime patch module
-* Microservices architecture
-* Load balancer
+### 🎯 Core Agents
 
----
+#### 1️⃣ Repository Analysis Agent
 
-## 🔹 AI Framework
+- Parses Git repos and extracts metadata
+- Generates skill graph nodes (Neo4j)
+- Detects tech stack, architecture patterns, testing habits, security signals
 
-You mentioned:
+#### 2️⃣ Profile Aggregation Agent _(new)_
 
-* LangChain
-* LangGraph
-* Google ADK
-* AGNO
+- Parses resume (PDF/text) and LinkedIn data
+- Cross-references stated skills against demonstrated skills from repos
+- Identifies discrepancies and highlights them in the Skill Graph
 
-Additional suggestions:
+#### 3️⃣ Role Matching Agent _(new)_
 
-* CrewAI (multi-agent orchestration)
-* Haystack (retrieval pipelines)
-* LlamaIndex (graph-based retrieval)
+- Compares Skill Graph against role requirements
+- Generates compatibility scores
+- Produces Gap Reports with prioritized improvement recommendations
 
-LangGraph is strong for:
+#### 4️⃣ Interview Generation Agent
 
-* Agent state management
-* Deterministic workflows
+- Generates adaptive, personalized questions based on the candidate's Skill Graph
+- Targets real gaps identified from repos and profile
+- Adjusts difficulty dynamically
 
----
+#### 5️⃣ Live Monitoring Agent
 
-## 🔹 Data Layer
+- Monitors code editor behavior in real time
+- Computes AI suspicion scoring and Risk Probability Index
 
-You proposed Neo4j.
+#### 6️⃣ Voice & Behavior Agent _(Enterprise / consent-gated)_
 
-That’s actually a very smart choice.
+- Speech transcription via Whisper
+- Behavioral anomaly detection
 
-Use Neo4j for:
+#### 7️⃣ Audit Transparency Agent
 
-* Developer skill graph
-* Interview knowledge graph
-* Enterprise org structure
+- Logs all AI decisions and modifications
+- Ensures every output is explainable and traceable
 
-But you still need:
+#### 8️⃣ Risk & Bias Evaluation Agent
 
-* PostgreSQL → transactional data
-* Redis → real-time interview state
-* Object storage → logs & recordings
-
-Neo4j should NOT be used alone.
+- Monitors evaluations for demographic or pattern-based bias
+- Generates fairness scores alongside technical scores
 
 ---
 
-## 🔹 LLM API Usage
+## 4️⃣ Technical Architecture
 
-You mentioned:
+### 🔹 Backend Core
 
-* Whisper
-* Grok
-* ElevenLabs
+- **NestJS** → API Gateway
+- **Python** → AI services
+- Microservices architecture
+- Load balancer
 
-Add:
-
-* GPT-4.x or Claude for reasoning
-* Code-dedicated models (e.g., Code LLM)
-* Guardrails layer (LLM output validation)
+_Note: The Rust/RIG module has been removed as it was tied exclusively to the deprecated Runtime Patch Agent._
 
 ---
 
-# 5️⃣ AI Cheating Detection — Critical Analysis
+### 🔹 AI Framework
 
-This is extremely difficult.
-
-You CANNOT reliably detect:
-
-* AI-generated code with certainty.
-* Someone reading from another screen.
-
-You can:
-
-* Detect anomalies.
-* Generate probabilistic scoring.
-
-Never use binary verdict.
-Use:
-
-> Risk Probability Index (0-100%)
-
-Otherwise you risk legal problems.
+- **LangGraph** — agent state management and deterministic workflows
+- **LangChain** — LLM chaining and tool use
+- **Google ADK / AGNO** — additional orchestration options
+- **CrewAI** — multi-agent coordination
+- **LlamaIndex** — graph-based retrieval for Skill Graph queries
+- **Haystack** — retrieval pipelines for resume and JD parsing
 
 ---
 
-# 6️⃣ Runtime AI Auto-Patching — Major Risk
+### 🔹 Data Layer
 
-This is dangerous.
-
-Downside:
-
-* AI may introduce new bugs.
-* Legal liability if system breaks.
-* Security implications.
-* Trust issues with developers.
-
-Better alternative:
-
-Instead of auto-patching production:
-
-Implement:
-
-* Shadow patch layer
-* Temporary override
-* Feature flag system
-* Automatic rollback
-* Mandatory developer validation
-
-Safer model:
-AI suggests patch → Auto-applies in staging → Human validation required for production.
+- **Neo4j** → Developer Skill Graph, Interview Knowledge Graph, Role Requirements Graph
+- **PostgreSQL** → Transactional data (users, sessions, scores, plans)
+- **Redis** → Real-time interview state
+- **Object Storage** → Logs, recordings, uploaded resumes
 
 ---
 
-# 7️⃣ Business Model
+### 🔹 LLM & AI Services
 
-Enterprise Plans:
-
-| Plan       | AI Strictness | Features                         |
-| ---------- | ------------- | -------------------------------- |
-| Basic      | Low           | Repo analysis + interview gen    |
-| Pro        | Medium        | Code editor monitoring           |
-| Enterprise | High          | Voice + cheating detection       |
-| Elite      | Advanced      | Runtime Guardian + org analytics |
+- **Code-specialized LLM** → Code evaluation
+- **Whisper** → Speech transcription
+- **Guardrails layer** → LLM output validation and safety
 
 ---
 
-# 8️⃣ Ethical & Legal Considerations
+## 5️⃣ AI Cheating Detection — Critical Notes
 
-You MUST consider:
+Cheating detection is probabilistic, not deterministic. The system **cannot** reliably detect AI-generated code with certainty or confirm someone is reading from another screen. What it can do is detect anomalies and assign a weighted risk score.
 
-* GDPR compliance
-* Candidate consent
-* AI transparency
-* Bias mitigation
-* Right to explanation
-* Data deletion policies
-
-Monitoring voice + gestures can be legally restricted in many countries.
-
-You need:
-
-* Consent system
-* Privacy-first architecture
+**Rule:** All cheating-related outputs must use the **Risk Probability Index (0–100%)** — never a binary pass/fail verdict. Misusing this as a hard disqualifier creates legal exposure.
 
 ---
 
-# 9️⃣ Things You Didn’t Mention (But Should)
+## 6️⃣ Business Model
 
-## 🔹 1. Explainability Layer
-
-Every AI decision must be explainable.
-
-Example:
-"Candidate received 72/100 because:"
-
-* Low test coverage in repos
-* Poor commit structure
-* Failed concurrency question
-
-Without this:
-Your system will be rejected by enterprises.
+| Plan              | Target User          | Key Features                                                             |
+| ----------------- | -------------------- | ------------------------------------------------------------------------ |
+| Free              | Individual candidate | Skill Graph, role matching, Gap Report                                   |
+| Pro (Individual)  | Serious job seekers  | Practice interviews, progress tracking, LinkedIn analysis                |
+| Starter (Company) | Small teams          | Repo analysis + adaptive interview generation                            |
+| Enterprise        | Large orgs           | Voice monitoring, cheating detection, HR dashboard, candidate comparison |
 
 ---
 
-## 🔹 2. Bias Detection
+## 7️⃣ Ethical & Legal Considerations
 
-AI hiring systems can be biased.
-
-You need:
-
-* Bias monitoring agent
-* Fairness scoring
-
----
-
-## 🔹 3. Adversarial Testing
-
-Candidates will try to bypass the system.
-
-You need:
-
-* Red team testing
-* Stress testing
-* Synthetic cheating simulation
+- **GDPR compliance** — data minimization, right to access, right to deletion
+- **Candidate consent** — explicit opt-in for all monitoring features, especially voice/webcam
+- **AI transparency** — every score comes with a human-readable explanation
+- **Bias mitigation** — dedicated agent monitors for unfair evaluation patterns
+- **Data ownership** — candidates in self-assessment mode own and control their data
+- **No binary verdicts** — all AI outputs are probabilistic and advisory
 
 ---
 
-## 🔹 4. Cost Control System
+## 8️⃣ Additional Engineering Concerns
 
-LLM APIs are expensive.
+### Explainability Layer
 
-You need:
+Every AI decision must surface a clear reason. Example:
 
-* Token usage tracking
-* Model routing (cheap vs advanced models)
-* Caching layer
+> _"Compatibility score: 61/100 — Strong in Node.js and REST API design. Gaps identified in distributed systems, testing coverage, and Kubernetes. Recommended: build one microservices project with Docker/K8s and improve test coverage above 60%."_
 
----
+Without this, the platform will not be trusted by either candidates or enterprises.
 
-# 🔟 Realistic Downsides
+### Bias Detection
 
-Be honest:
+AI hiring systems can encode bias from training data. The Risk & Bias Evaluation Agent must run alongside every evaluation and flag statistically anomalous patterns.
 
-1. This project is HUGE.
-2. Cheating detection is unreliable.
-3. Runtime patching is dangerous.
-4. Legal complexity is high.
-5. AI cost can explode.
+### Adversarial Robustness
 
-If done badly:
-It becomes a surveillance tool.
+Candidates will attempt to game the system — inflated repos, fake commit history, AI-generated portfolio projects. The Profile Aggregation Agent must include authenticity heuristics (commit depth, code originality signals, timeline consistency).
 
-If done correctly:
-It becomes a serious enterprise SaaS.
+### Cost Control
+
+LLM API calls across a full candidate flow (repo analysis + resume parsing + question generation + live monitoring) can be expensive at scale. Required infrastructure: token usage tracking per session, tiered model routing (lightweight models for simple tasks, advanced models for reasoning-heavy tasks), and a caching layer for repeated skill graph queries.
 
 ---
 
-# 🎯 My Professional Advice
+## 9️⃣ Realistic Challenges
 
-For V1:
-
-Focus on:
-
-* Repository Analysis Agent
-* Interview Generation Agent
-* Skill Graph (Neo4j)
-* Live Code Editor with anomaly scoring (basic)
-* Enterprise dashboard
-
-Avoid for V1:
-
-* Runtime auto-patching in production
-* Aggressive surveillance
-* Real-time behavioral analysis
-
-Build modular so you can add later.
+1. **Scope is large** — prioritization and phased delivery are critical
+2. **Cheating detection is unreliable** — must always be framed probabilistically
+3. **Legal complexity is high** — especially for voice/behavior monitoring across jurisdictions
+4. **LLM cost can scale quickly** — cost controls are not optional
+5. **Resume and LinkedIn parsing is messy** — real-world data is inconsistent and noisy
+6. **Role matching quality depends on data** — requires a well-maintained role/skills taxonomy
 
 ---
 
-# 🚀 Final Evaluation
+## 🎯 V1 Recommended Scope
 
-This is:
+**Build:**
 
-* Architecturally advanced
-* AI heavy
-* Ethically sensitive
-* Enterprise-grade
-* Extremely impressive if done correctly
+- Repository Analysis Agent
+- Profile Aggregation Agent (resume parsing)
+- Developer Skill Graph (Neo4j)
+- Role Matching & Gap Report system
+- Adaptive Interview Generation
+- Candidate self-assessment dashboard
 
-It can become:
+**Defer to V2:**
 
-> A serious startup-level platform.
+- Live Code Editor with basic anomaly scoring
+- Voice & behavioral monitoring
+- LinkedIn live integration (use manual input first)
+- Advanced bias auditing
+- Real-time enterprise org analytics
+
+Build modular. Every agent should be independently deployable and replaceable.
+
+---
+
+## 🚀 Final Assessment
+
+AegisHire, in its updated form, is a more complete and more defensible product than its original enterprise-only version. Opening the platform to individual candidates creates a two-sided marketplace dynamic — candidates want to use it to prepare, companies want to use it because candidates already have profiles on it. That flywheel is valuable.
+
+The core is technically ambitious, ethically navigable if handled carefully, and commercially viable across both B2C and B2B segments.
+
+> If executed well: a serious, differentiated platform in the AI hiring space.
