@@ -23,6 +23,20 @@ except ModuleNotFoundError:
     )
     raise
 
+try:
+    import pytesseract
+    from PIL import Image
+    import io
+    HAS_OCR = True
+except ModuleNotFoundError:
+    print(
+        "Warning: OCR modules not found (pytesseract/PIL). Image-based PDF parsing will be unavailable.\n"
+        "To enable: python -m pip install pytesseract Pillow\n"
+        "Also requires Tesseract OCR installed on system: https://github.com/UB-Mannheim/tesseract/wiki",
+        file=sys.stderr
+    )
+    HAS_OCR = False
+
 
 @dataclass
 class ContactInfo:
@@ -89,6 +103,56 @@ class CVParser:
                     "Please set it before running the parser."
                 )
             self.client = Groq(api_key=api_key)
+
+    @staticmethod
+    def extract_text_from_pdf(pdf_path: str, use_ocr: bool = True) -> str:
+        """Extract text from PDF, using OCR for image-based PDFs if needed"""
+        doc = fitz.open(pdf_path)
+        text = ""
+        
+        for page_num, page in enumerate(doc):
+            # Try to extract text normally first
+            page_text = page.get_text()
+            
+            if page_text.strip():
+                # Page has extractable text
+                text += page_text
+            elif use_ocr and HAS_OCR:
+                # Page is image-based, use OCR
+                print(f"Page {page_num + 1} appears to be image-based, using OCR...", file=sys.stderr)
+                page_text_ocr = CVParser._extract_text_with_ocr(page)
+                if page_text_ocr:
+                    text += page_text_ocr
+                else:
+                    print(f"Warning: Failed to extract text from page {page_num + 1}", file=sys.stderr)
+            elif use_ocr and not HAS_OCR:
+                print(
+                    f"Page {page_num + 1} is image-based but OCR is not available. "
+                    "Install pytesseract and Tesseract OCR to parse image-based PDFs.",
+                    file=sys.stderr
+                )
+        
+        doc.close()
+        return text
+
+    @staticmethod
+    def _extract_text_with_ocr(page) -> str:
+        """Extract text from a PDF page using OCR (Tesseract)"""
+        if not HAS_OCR:
+            return ""
+        
+        try:
+            # Render page to image
+            pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))  # 2x zoom for better OCR
+            img_data = pix.tobytes("ppm")
+            img = Image.open(io.BytesIO(img_data))
+            
+            # Perform OCR
+            text = pytesseract.image_to_string(img)
+            return text
+        except Exception as e:
+            print(f"OCR extraction failed: {e}", file=sys.stderr)
+            return ""
 
     def parse(self) -> CV:
         """Main parsing method - uses AI by default"""
@@ -395,7 +459,7 @@ Rules:
 
 
 # Allow passing the PDF path as the first argument; otherwise use the default path.
-pdf_path = sys.argv[1] if len(sys.argv) > 1 else r"D:\users\seif\Downloads\cv3.pdf"
+pdf_path = sys.argv[1] if len(sys.argv) > 1 else r"D:\users\seif\Downloads\cv4.pdf"
 
 if not os.path.exists(pdf_path):
     print(
@@ -404,10 +468,12 @@ if not os.path.exists(pdf_path):
     )
     sys.exit(1)
 
-doc = fitz.open(pdf_path)
-text = ""
-for page in doc:
-    text += page.get_text()
+# Extract text from PDF (handles both text-based and image-based PDFs)
+text = CVParser.extract_text_from_pdf(pdf_path, use_ocr=True)
+
+if not text.strip():
+    print("Error: No text could be extracted from the PDF.", file=sys.stderr)
+    sys.exit(1)
 
 # Check if Groq API key is available
 use_ai = bool(os.getenv("GROQ_API_KEY"))
