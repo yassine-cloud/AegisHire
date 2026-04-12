@@ -16,10 +16,9 @@ export class EmailVerifiedGuard implements CanActivate {
       throw new UnauthorizedException('Missing authenticated user context');
     }
 
-    const emailVerifiedByMetadata = user.user_metadata?.email_verified === true;
-    const emailVerifiedByClaims = Boolean(user.email_confirmed_at || user.confirmed_at);
+    const emailVerified = Boolean(user.email_confirmed_at || user.confirmed_at);
 
-    if (!emailVerifiedByMetadata && !emailVerifiedByClaims) {
+    if (!emailVerified) {
       throw new ForbiddenException('Email verification is required');
     }
 
