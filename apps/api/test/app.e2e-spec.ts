@@ -1,7 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import request from 'supertest';
+import * as request from 'supertest';
 import { App } from 'supertest/types';
+
+jest.mock('jose', () => ({
+  createRemoteJWKSet: () => async () => ({ keys: [] }),
+  jwtVerify: async () => {
+    throw new Error('jwtVerify should not be called in app.e2e-spec');
+  },
+}));
+
 import { AppModule } from './../src/app.module';
 
 describe('AppController (e2e)', () => {

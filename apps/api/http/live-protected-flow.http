@@ -1,7 +1,7 @@
 ### Live flow: Supabase login -> protected API
 ### Fill variables, then run top to bottom with VS Code REST Client.
 
-@supabaseUrl = https://mbytkbafhkqbhijoonjb.supabase.co
+@supabaseUrl = https://YOUR_PROJECT_REF.supabase.co
 @supabaseAnonKey = YOUR_SUPABASE_ANON_KEY
 @apiBaseUrl = http://localhost:3001
 

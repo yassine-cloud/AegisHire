@@ -12,7 +12,7 @@ export type SupabaseJwtPayload = JWTPayload & {
 
 @Injectable()
 export class SupabaseJwtService {
-  private supabaseUrl?: string;
+  private readonly supabaseUrl?: string;
   private issuer?: string;
   private audience?: string;
   private jwks?: ReturnType<typeof createRemoteJWKSet>;
@@ -20,9 +20,6 @@ export class SupabaseJwtService {
   constructor() {
     const supabaseUrl = process.env.SUPABASE_URL?.trim();
     this.supabaseUrl = supabaseUrl ? supabaseUrl.replace(/\/+$/, '') : undefined;
-    this.issuer = this.supabaseUrl
-      ? process.env.SUPABASE_JWT_ISSUER?.trim() || `${this.supabaseUrl}/auth/v1`
-      : undefined;
     this.audience = process.env.SUPABASE_JWT_AUDIENCE?.trim() || 'authenticated';
   }
 
@@ -32,7 +29,7 @@ export class SupabaseJwtService {
     jwks: ReturnType<typeof createRemoteJWKSet>;
   } {
     if (!this.supabaseUrl) {
-      throw new Error('SUPABASE_URL is required for Supabase JWT verification');
+      throw new UnauthorizedException('SUPABASE_URL is required for Supabase JWT verification');
     }
 
     if (!this.issuer) {
@@ -44,8 +41,7 @@ export class SupabaseJwtService {
     }
 
     if (!this.jwks) {
-      const jwksUrl =
-        process.env.SUPABASE_JWKS_URL?.trim() || `${this.supabaseUrl}/auth/v1/.well-known/jwks.json`;
+      const jwksUrl = process.env.SUPABASE_JWKS_URL?.trim() || `${this.supabaseUrl}/auth/v1/.well-known/jwks.json`;
       this.jwks = createRemoteJWKSet(new URL(jwksUrl));
     }
 
