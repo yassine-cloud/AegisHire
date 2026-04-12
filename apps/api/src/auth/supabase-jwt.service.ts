@@ -12,33 +12,59 @@ export type SupabaseJwtPayload = JWTPayload & {
 
 @Injectable()
 export class SupabaseJwtService {
-  private readonly supabaseUrl: string;
-  private readonly issuer: string;
-  private readonly audience: string;
-  private readonly jwks: ReturnType<typeof createRemoteJWKSet>;
+  private supabaseUrl?: string;
+  private issuer?: string;
+  private audience?: string;
+  private jwks?: ReturnType<typeof createRemoteJWKSet>;
 
   constructor() {
     const supabaseUrl = process.env.SUPABASE_URL?.trim();
-    if (!supabaseUrl) {
+    this.supabaseUrl = supabaseUrl ? supabaseUrl.replace(/\/+$/, '') : undefined;
+    this.issuer = this.supabaseUrl
+      ? process.env.SUPABASE_JWT_ISSUER?.trim() || `${this.supabaseUrl}/auth/v1`
+      : undefined;
+    this.audience = process.env.SUPABASE_JWT_AUDIENCE?.trim() || 'authenticated';
+  }
+
+  private getVerificationConfig(): {
+    issuer: string;
+    audience: string;
+    jwks: ReturnType<typeof createRemoteJWKSet>;
+  } {
+    if (!this.supabaseUrl) {
       throw new Error('SUPABASE_URL is required for Supabase JWT verification');
     }
 
-    this.supabaseUrl = supabaseUrl.replace(/\/+$/, '');
-    this.issuer = process.env.SUPABASE_JWT_ISSUER?.trim() || `${this.supabaseUrl}/auth/v1`;
-    this.audience = process.env.SUPABASE_JWT_AUDIENCE?.trim() || 'authenticated';
+    if (!this.issuer) {
+      this.issuer = process.env.SUPABASE_JWT_ISSUER?.trim() || `${this.supabaseUrl}/auth/v1`;
+    }
 
-    const jwksUrl = process.env.SUPABASE_JWKS_URL?.trim() || `${this.supabaseUrl}/auth/v1/.well-known/jwks.json`;
-    this.jwks = createRemoteJWKSet(new URL(jwksUrl));
+    if (!this.audience) {
+      this.audience = process.env.SUPABASE_JWT_AUDIENCE?.trim() || 'authenticated';
+    }
+
+    if (!this.jwks) {
+      const jwksUrl =
+        process.env.SUPABASE_JWKS_URL?.trim() || `${this.supabaseUrl}/auth/v1/.well-known/jwks.json`;
+      this.jwks = createRemoteJWKSet(new URL(jwksUrl));
+    }
+
+    return {
+      issuer: this.issuer,
+      audience: this.audience,
+      jwks: this.jwks,
+    };
   }
 
   async verifyAccessToken(token: string): Promise<SupabaseJwtPayload> {
+    const { issuer, audience, jwks } = this.getVerificationConfig();
     const verifyOptions: JWTVerifyOptions = {
-      issuer: this.issuer,
-      audience: this.audience,
+      issuer,
+      audience,
     };
 
     try {
-      const { payload } = await jwtVerify(token, this.jwks, verifyOptions);
+      const { payload } = await jwtVerify(token, jwks, verifyOptions);
       return payload as SupabaseJwtPayload;
     } catch {
       throw new UnauthorizedException('Invalid or expired Bearer token');
