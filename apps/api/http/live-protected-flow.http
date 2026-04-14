@@ -1,12 +1,12 @@
 ### Live flow: Supabase login -> protected API
 ### Fill variables, then run top to bottom with VS Code REST Client.
 
-@supabaseUrl = https://YOUR_PROJECT_REF.supabase.co
-@supabaseAnonKey = YOUR_SUPABASE_ANON_KEY
+@supabaseUrl = https://mbytkbafhkqbhijoonjb.supabase.co
+@supabaseAnonKey = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ieXRrYmFmaGtxYmhpam9vbmpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzQ1NjEsImV4cCI6MjA5MTUxMDU2MX0.7K0AFwmBYCpSrKBjFmYsDr4iiCbx618HTiaO2mShhTw
 @apiBaseUrl = http://localhost:3001
 
-@testEmail = YOUR_VERIFIED_EMAIL
-@testPassword = YOUR_PASSWORD
+@testEmail = yassine.krichen@insat.ucar.tn
+@testPassword = password123
 
 ### 1) Login to Supabase
 # @name login
@@ -20,8 +20,8 @@ Content-Type: application/json
 }
 
 ### 2) Protected route without token -> expect 401
-GET {{apiBaseUrl}}/profile
+GET {{apiBaseUrl}}/profile/me
 
 ### 3) Protected route with valid token -> expect 200
-GET {{apiBaseUrl}}/profile
+GET {{apiBaseUrl}}/profile/me
 Authorization: Bearer {{login.response.body.$.access_token}}
