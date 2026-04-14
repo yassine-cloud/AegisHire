@@ -1,35 +1,34 @@
 import { Injectable } from '@nestjs/common';
-import { prisma, Prisma } from '@aegishire/db';
+import { prisma } from '@aegishire/db';
 import type { Profile } from '@aegishire/db';
+import type { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
-export class ProfileService {
-  create(createProfileDto: Prisma.ProfileCreateInput): Promise<Profile> {
-    return prisma.profile.create({
-      data: createProfileDto,
-    });
-  }
-
-  findAll(): Promise<Profile[]> {
-    return prisma.profile.findMany();
-  }
-
-  findOne(id: string): Promise<Profile | null> {
+export class ProfilesService {
+  getProfile(userId: string): Promise<Profile | null> {
     return prisma.profile.findUnique({
-      where: { id },
+      where: { userId },
     });
   }
 
-  update(id: string, updateProfileDto: Prisma.ProfileUpdateInput): Promise<Profile> {
-    return prisma.profile.update({
-      where: { id },
-      data: updateProfileDto,
+  updateProfile(userId: string, updateProfileDto: UpdateProfileDto): Promise<Profile> {
+    return prisma.profile.upsert({
+      where: { userId },
+      create: {
+        userId,
+        githubUsername: updateProfileDto.githubUsername,
+        resumeFileUrl: updateProfileDto.resumeFileUrl,
+      },
+      update: {
+        githubUsername: updateProfileDto.githubUsername,
+        resumeFileUrl: updateProfileDto.resumeFileUrl,
+      },
     });
   }
 
-  remove(id: string): Promise<Profile> {
-    return prisma.profile.delete({
-      where: { id },
+  async deleteProfile(userId: string): Promise<void> {
+    await prisma.profile.deleteMany({
+      where: { userId },
     });
   }
 }

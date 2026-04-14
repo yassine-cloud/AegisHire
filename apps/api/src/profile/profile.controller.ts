@@ -1,39 +1,39 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
-import { ProfileService } from './profile.service';
-import { CreateProfileDto } from './dto/create-profile.dto';
+import { Body, Controller, Delete, Get, HttpCode, Patch, UseGuards } from '@nestjs/common';
+import { ProfilesService } from './profile.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { Prisma } from '@aegishire/db';
 import type { Profile } from '@aegishire/db';
 import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
 import { EmailVerifiedGuard } from '../auth/email-verified.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
+import type { SupabaseJwtPayload } from '../auth/supabase-jwt.service';
+import { ApiBearerAuth, ApiNoContentResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Profile')
+@ApiBearerAuth('supabase-bearer')
 @Controller('profile')
 @UseGuards(SupabaseAuthGuard, EmailVerifiedGuard)
-export class ProfileController {
-  constructor(private readonly profileService: ProfileService) {}
+export class ProfilesController {
+  constructor(private readonly profilesService: ProfilesService) {}
 
-  @Post()
-  create(@Body() createProfileDto: Prisma.ProfileCreateInput): Promise<Profile> {
-    return this.profileService.create(createProfileDto);
+  @ApiOperation({ summary: 'Get current user profile' })
+  @ApiOkResponse({ description: 'Returns the current authenticated user profile if it exists' })
+  @Get('me')
+  findMe(@CurrentUser() user: SupabaseJwtPayload): Promise<Profile | null> {
+    return this.profilesService.getProfile(user.id);
   }
 
-  @Get()
-  findAll(): Promise<Profile[]> {
-    return this.profileService.findAll();
+  @ApiOperation({ summary: 'Create or update current user profile' })
+  @ApiOkResponse({ description: 'Upserts profile data for the current authenticated user' })
+  @Patch('me')
+  updateMe(@CurrentUser() user: SupabaseJwtPayload, @Body() updateProfileDto: UpdateProfileDto): Promise<Profile> {
+    return this.profilesService.updateProfile(user.id, updateProfileDto);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string): Promise<Profile | null> {
-    return this.profileService.findOne(id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProfileDto: Prisma.ProfileUpdateInput): Promise<Profile> {
-    return this.profileService.update(id, updateProfileDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string): Promise<Profile> {
-    return this.profileService.remove(id);
+  @ApiOperation({ summary: 'Delete current user profile' })
+  @ApiNoContentResponse({ description: 'Profile deleted (or no profile existed)' })
+  @Delete('me')
+  @HttpCode(204)
+  async deleteMe(@CurrentUser() user: SupabaseJwtPayload): Promise<void> {
+    await this.profilesService.deleteProfile(user.id);
   }
 }
