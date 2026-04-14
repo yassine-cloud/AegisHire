@@ -1,4 +1,15 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateProfileDto } from './create-profile.dto';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
-export class UpdateProfileDto extends PartialType(CreateProfileDto) {}
+export class UpdateProfileDto {
+	@ApiPropertyOptional({
+		description: 'GitHub username linked to the profile',
+		example: 'octocat',
+	})
+	githubUsername?: string;
+
+	@ApiPropertyOptional({
+		description: 'Public URL to the candidate resume',
+		example: 'https://cdn.example.com/resumes/octocat.pdf',
+	})
+	resumeFileUrl?: string;
+}

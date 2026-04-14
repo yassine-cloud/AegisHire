@@ -1,17 +1,25 @@
+import '../../test/mocks/jose.mock';
+import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
+import { EmailVerifiedGuard } from '../auth/email-verified.guard';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ProfileController } from './profile.controller';
-import { ProfileService } from './profile.service';
+import { ProfilesController } from './profile.controller';
+import { ProfilesService } from './profile.service';
 
-describe('ProfileController', () => {
-  let controller: ProfileController;
+describe('ProfilesController', () => {
+  let controller: ProfilesController;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [ProfileController],
-      providers: [ProfileService],
-    }).compile();
+      controllers: [ProfilesController],
+      providers: [ProfilesService],
+    })
+      .overrideGuard(SupabaseAuthGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(EmailVerifiedGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
-    controller = module.get<ProfileController>(ProfileController);
+    controller = module.get<ProfilesController>(ProfilesController);
   });
 
   it('should be defined', () => {
