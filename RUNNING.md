@@ -17,7 +17,7 @@ Install these tools on your machine:
 - pnpm 10+
 - Python 3.12+
 - uv (Python package manager/runner)
-- PostgreSQL 15+ (local or remote)
+- A Supabase project (Auth + Postgres)
 
 Quick checks:
 
@@ -38,18 +38,22 @@ Create these files before running the app:
 Use this value format (replace credentials if needed):
 
 ```env
-DATABASE_URL="postgresql://postgres:password@localhost:5432/aegishire"
+DATABASE_URL="postgresql://postgres:[PASSWORD]@db.[PROJECT_REF].supabase.co:5432/postgres?sslmode=require"
+DIRECT_URL="postgresql://postgres:[PASSWORD]@db.[PROJECT_REF].supabase.co:5432/postgres?sslmode=require"
 ```
 
 Notes:
 
 - `apps/api/.env` is used when running the API.
 - `packages/db/.env` is used by Prisma commands in `packages/db`.
-- Keep both files aligned to the same database while developing.
+- Keep both files aligned to the same Supabase database while developing.
+- For this auth feature branch, avoid localhost DB URLs so all teammates validate against the shared Supabase project.
+- Use `DATABASE_URL` for runtime and pooled traffic; use `DIRECT_URL` for Prisma migration/introspection when needed.
 
 ## 4. Database Setup
 
-1. Create the database named `aegishire`.
+1. Create a Supabase project and copy the Postgres connection string into both env files.
+2. Ensure SSL mode is enabled in the connection string (`sslmode=require`).
 
 ## 5. Install Dependencies
 
@@ -124,8 +128,11 @@ Worker is not included in `pnpm dev` and should be started separately.
 
 - `SASL ... client password must be a string`:
   - Check `DATABASE_URL` exists and is valid in both env files.
+- Prisma cannot connect to DB:
+  - Ensure both `apps/api/.env` and `packages/db/.env` point to the same Supabase DB.
+  - Confirm `sslmode=require` is present in the URL.
 - Prisma migration UUID errors:
-  - Ensure `CREATE EXTENSION IF NOT EXISTS pgcrypto;` was executed in `aegishire` DB.
+  - Ensure `CREATE EXTENSION IF NOT EXISTS pgcrypto;` exists in the target database.
 - API cannot import `@aegishire/db`:
   - Rebuild DB package:
 
