@@ -6,6 +6,14 @@ from dataclasses import dataclass, asdict
 from typing import List, Dict, Any, Optional
 
 try:
+    from dotenv import load_dotenv
+    # Load .env file from the apps directory if present
+    env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env")
+    load_dotenv(dotenv_path=env_path)
+except ImportError:
+    pass
+
+try:
     import fitz  # PyMuPDF
 except ModuleNotFoundError:
     print(
@@ -459,7 +467,7 @@ Rules:
 
 
 # Allow passing the PDF path as the first argument; otherwise use the default path.
-pdf_path = sys.argv[1] if len(sys.argv) > 1 else r"D:\users\seif\Downloads\cv4.pdf"
+pdf_path = sys.argv[1] if len(sys.argv) > 1 else r"C:\Users\akram\Downloads\cv_akram_2026.pdf"
 
 if not os.path.exists(pdf_path):
     print(
