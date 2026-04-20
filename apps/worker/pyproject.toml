@@ -9,4 +9,5 @@ dependencies = [
     "pytesseract>=0.3.10",
     "Pillow>=10.0.0",
     "python-dotenv>=1.0.0",
+    "neo4j>=6.1.0",
 ]
