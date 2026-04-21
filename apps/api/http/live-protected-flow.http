@@ -25,3 +25,12 @@ GET {{apiBaseUrl}}/profile/me
 ### 3) Protected route with valid token -> expect 200
 GET {{apiBaseUrl}}/profile/me
 Authorization: Bearer {{login.response.body.$.access_token}}
+
+### 4) github analyze with worker
+POST {{apiBaseUrl}}/github-analysis/trigger
+Authorization: Bearer {{login.response.body.$.access_token}}
+Content-Type: application/json
+
+{
+  "githubUsername": "yassine-krichen"
+}

@@ -5,6 +5,7 @@ import traceback
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
+from github.router import router as github_router
 import sys
 from pathlib import Path
 
@@ -22,6 +23,7 @@ app = FastAPI(
     description="API for parsing CV documents and extracting structured information",
     version="1.0.0"
 )
+app.include_router(github_router)
 
 # Enable CORS for frontend access
 app.add_middleware(
