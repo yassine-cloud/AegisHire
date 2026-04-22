@@ -470,11 +470,11 @@ Rules:
         self.cv.work_experience = work_exp if work_exp else None
 
 
+
 if __name__ == "__main__":
     # Allow passing the PDF path as the first argument; otherwise use the default path.
     pdf_path = sys.argv[1] if len(sys.argv) > 1 else r"D:\users\seif\Downloads\cv4.pdf"
-# Allow passing the PDF path as the first argument; otherwise use the default path.
-pdf_path = sys.argv[1] if len(sys.argv) > 1 else r"C:\Users\akram\Downloads\cv_akram_2026.pdf"
+
 
     if not os.path.exists(pdf_path):
         print(
