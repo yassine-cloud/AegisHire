@@ -4,6 +4,10 @@ import json
 import re
 from dataclasses import dataclass, asdict
 from typing import List, Dict, Any, Optional
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 try:
     from dotenv import load_dotenv
@@ -466,31 +470,34 @@ Rules:
         self.cv.work_experience = work_exp if work_exp else None
 
 
+if __name__ == "__main__":
+    # Allow passing the PDF path as the first argument; otherwise use the default path.
+    pdf_path = sys.argv[1] if len(sys.argv) > 1 else r"D:\users\seif\Downloads\cv4.pdf"
 # Allow passing the PDF path as the first argument; otherwise use the default path.
 pdf_path = sys.argv[1] if len(sys.argv) > 1 else r"C:\Users\akram\Downloads\cv_akram_2026.pdf"
 
-if not os.path.exists(pdf_path):
-    print(
-        f"PDF file not found: {pdf_path!r}.\n"
-        "Please provide a valid path, for example:\n  python cvParser.py D:/path/to/file.pdf"
-    )
-    sys.exit(1)
+    if not os.path.exists(pdf_path):
+        print(
+            f"PDF file not found: {pdf_path!r}.\n"
+            "Please provide a valid path, for example:\n  python cvParser.py D:/path/to/file.pdf"
+        )
+        sys.exit(1)
 
-# Extract text from PDF (handles both text-based and image-based PDFs)
-text = CVParser.extract_text_from_pdf(pdf_path, use_ocr=True)
+    # Extract text from PDF (handles both text-based and image-based PDFs)
+    text = CVParser.extract_text_from_pdf(pdf_path, use_ocr=True)
 
-if not text.strip():
-    print("Error: No text could be extracted from the PDF.", file=sys.stderr)
-    sys.exit(1)
+    if not text.strip():
+        print("Error: No text could be extracted from the PDF.", file=sys.stderr)
+        sys.exit(1)
 
-# Check if Groq API key is available
-use_ai = bool(os.getenv("GROQ_API_KEY"))
-if not use_ai:
-    print("Warning: GROQ_API_KEY not set. Using fallback regex parsing.", file=sys.stderr)
+    # Check if Groq API key is available
+    use_ai = bool(os.getenv("GROQ_API_KEY"))
+    if not use_ai:
+        print("Warning: GROQ_API_KEY not set. Using fallback regex parsing.", file=sys.stderr)
 
-# Parse the extracted text
-parser = CVParser(text, use_ai=use_ai)
-cv = parser.parse()
+    # Parse the extracted text
+    parser = CVParser(text, use_ai=use_ai)
+    cv = parser.parse()
 
-# Output as JSON
-print(cv.to_json())
+    # Output as JSON
+    print(cv.to_json())
