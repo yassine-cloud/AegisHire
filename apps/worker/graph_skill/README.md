@@ -9,16 +9,18 @@ Requirements
 Install (editable):
 ```bash
 # from repo root
-python -m pip install -e apps/graph_skill
+# from repo root
+python -m pip install -e apps/worker/graph_skill
 # or from the app directory
-cd apps/graph_skill
+cd apps/worker/graph_skill
 python -m pip install -e .
 ```
 
 Run (development):
 ```bash
 # from repo root
-uvicorn apps.graph_skill.main:app --host 0.0.0.0 --port 8000 --reload
+# from repo root
+uvicorn apps.worker.graph_skill.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 Endpoints

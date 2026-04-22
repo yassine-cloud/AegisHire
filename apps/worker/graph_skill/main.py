@@ -35,7 +35,7 @@ def get_builder():
             from .graph_skill_db.builder import SkillGraphBuilder
         except Exception:
             try:
-                from graph_skill.graph_skill_db.builder import SkillGraphBuilder
+                from apps.worker.graph_skill.graph_skill_db.builder import SkillGraphBuilder
             except Exception as e:
                 raise RuntimeError(f"Failed to import SkillGraphBuilder: {e}")
 
@@ -79,4 +79,4 @@ async def health():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("apps.graph_skill.main:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)), reload=False)
+    uvicorn.run("apps.worker.graph_skill.main:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)), reload=False)
