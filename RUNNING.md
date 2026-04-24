@@ -18,6 +18,7 @@ Install these tools on your machine:
 - Python 3.12+
 - uv (Python package manager/runner)
 - A Supabase project (Auth + Postgres)
+- Docker & Docker Compose (for local Redis)
 
 Quick checks:
 
@@ -26,6 +27,15 @@ node -v
 pnpm -v
 python --version
 uv --version
+docker compose version
+```
+
+## 3. Local Services (Docker)
+
+To start the required local services (Redis):
+
+```bash
+docker compose up -d
 ```
 
 ## 3. Environment Files

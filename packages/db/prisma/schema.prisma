@@ -44,6 +44,7 @@ model Profile {
   userId           String    @unique @map("user_id") @db.Uuid
   githubUsername   String?   @map("github_username") @db.VarChar(100)
   resumeFileUrl    String?   @map("resume_file_url") @db.Text
+  skills           Json?
   githubAnalyzedAt DateTime? @map("github_analyzed_at")
   resumeParsedAt   DateTime? @map("resume_parsed_at")
   graphBuiltAt     DateTime? @map("graph_built_at")
