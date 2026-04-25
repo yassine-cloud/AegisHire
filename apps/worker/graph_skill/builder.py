@@ -2,12 +2,26 @@ import os
 from neo4j import GraphDatabase
 from typing import List, Dict, Any
 from datetime import datetime
+from dotenv import load_dotenv
+from pathlib import Path
+
+# Load the worker .env explicitly to ensure consistent env values when run from VSCode/uvicorn
+_env_path = Path(__file__).resolve().parents[2] / ".env"
+load_dotenv(dotenv_path=str(_env_path), override=False)
+
 
 class SkillGraphBuilder:
     def __init__(self, uri: str = None, user: str = None, password: str = None):
-        self.uri = uri or os.getenv("NEO4J_URI", "neo4j+s://1213a52d.databases.neo4j.io")
-        self.user = user or os.getenv("NEO4J_USERNAME", "neo4j")
-        self.password = password or os.getenv("NEO4J_PASSWORD", "password")
+        # Prefer explicit parameters -> environment -> sensible local default
+        self.uri = uri or os.getenv("NEO4J_URI") or "bolt://localhost:7687"
+        # Some modules use NEO4J_USER, others NEO4J_USERNAME; support both
+        self.user = user or os.getenv("NEO4J_USERNAME") or os.getenv("NEO4J_USER") or "neo4j"
+        self.password = password or os.getenv("NEO4J_PASSWORD") or os.getenv("NEO4J_PASSWORD") or "password"
+
+        # Validate URI early and give helpful error
+        if not self.uri:
+            raise RuntimeError("NEO4J_URI is not set; set it in your .env or pass it to SkillGraphBuilder")
+
         self.driver = GraphDatabase.driver(self.uri, auth=(self.user, self.password))
         
         # Simple taxonomy normalization dictionary (could be fetched from DB)
@@ -41,6 +55,54 @@ class SkillGraphBuilder:
         Rebuilds the graph for a candidate by merging their skills from multiple sources.
         Expects CV parsing data and GitHub analysis data.
         """
+        # If `github_data` is provided as a GitHub username (str) or dict containing
+        # `github_username`, fetch and run the repository analysis to populate
+        # the same structure expected by the builder (languages, skill_signals, etc.).
+        username = None
+        if isinstance(github_data, str):
+            username = github_data.strip()
+        elif isinstance(github_data, dict) and github_data.get("github_username"):
+            username = github_data.get("github_username").strip()
+
+        if username:
+            try:
+                import asyncio
+                from apps.worker.github.fetcher import fetch_repos, fetch_languages, fetch_readme, fetch_file_tree, fetch_commits
+                from apps.worker.github.analyser import analyse
+
+                async def _do_analyse(uname: str):
+                    repos = await fetch_repos(uname)
+                    if not repos:
+                        return {}
+                    tasks = [
+                        asyncio.gather(
+                            fetch_languages(uname, repo["name"]),
+                            fetch_file_tree(uname, repo["name"]),
+                            fetch_readme(uname, repo["name"]),
+                            fetch_commits(uname, repo["name"]),
+                        )
+                        for repo in repos
+                    ]
+                    results = await asyncio.gather(*tasks)
+
+                    languages_per_repo = {}
+                    file_trees = {}
+                    readmes = {}
+                    commits_per_repo = {}
+
+                    for repo, (langs, tree, readme, commits) in zip(repos, results):
+                        name = repo["name"]
+                        languages_per_repo[name] = langs
+                        file_trees[name] = tree
+                        readmes[name] = readme
+                        commits_per_repo[name] = commits
+
+                    return analyse(repos, languages_per_repo, file_trees, readmes, commits_per_repo)
+
+                github_data = asyncio.run(_do_analyse(username)) or {}
+            except Exception:
+                github_data = {}
+
         with self.driver.session() as session:
             # Upsert User and Set commit_consistency_score
             commit_score = github_data.get("commit_consistency_score", 0.0) if github_data else 0.0

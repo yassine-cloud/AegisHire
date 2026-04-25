@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
-USER = os.getenv("NEO4J_USER", "neo4j")
+USER = os.getenv("NEO4J_USERNAME", "neo4j")
 PASSWORD = os.getenv("NEO4J_PASSWORD", "password1234")
 
 

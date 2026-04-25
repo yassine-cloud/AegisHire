@@ -5,7 +5,11 @@ import traceback
 import os
 
 from dotenv import load_dotenv
-load_dotenv()
+from pathlib import Path
+
+# Ensure the apps/worker/.env is loaded (override other .env files)
+_env_path = Path(__file__).resolve().parents[1] / ".env"
+load_dotenv(dotenv_path=str(_env_path), override=True)
 
 app = FastAPI(title="Graph Skill API", version="0.1.0")
 
@@ -32,10 +36,10 @@ def get_builder():
     global _builder
     if _builder is None:
         try:
-            from .graph_skill_db.builder import SkillGraphBuilder
+            from .builder import SkillGraphBuilder
         except Exception:
             try:
-                from apps.worker.graph_skill.graph_skill_db.builder import SkillGraphBuilder
+                from apps.worker.graph_skill.builder import SkillGraphBuilder
             except Exception as e:
                 raise RuntimeError(f"Failed to import SkillGraphBuilder: {e}")
 
