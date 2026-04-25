@@ -5,7 +5,7 @@ import traceback
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
-from github.router import router as github_router
+from .github.router import router as github_router
 import sys
 from pathlib import Path
 
