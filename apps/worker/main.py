@@ -2,15 +2,30 @@ import os
 import tempfile
 import json
 import traceback
-from fastapi import FastAPI, UploadFile, File, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
-from .github.router import router as github_router
 import sys
 from pathlib import Path
 
-# Add parsers directory to path
+from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
+
+# Ensure the package parent directory and parsers directory are on sys.path
+# so we can import the local `github` package and `parsers` modules when
+# running the app via CLI tooling that may not set package context.
+sys.path.insert(0, str(Path(__file__).parent))
 sys.path.insert(0, str(Path(__file__).parent / "parsers"))
+
+try:
+    from github.router import router as github_router
+except Exception as e:
+    # Fallback to relative import if running as a package
+    from .github.router import router as github_router
+
+try:
+    from graph_skill.main import router as graph_skill_router
+except Exception:
+    # Fallback to relative import if running as a package
+    from .graph_skill.main import router as graph_skill_router
 
 try:
     from cvParser import CVParser
@@ -24,6 +39,7 @@ app = FastAPI(
     version="1.0.0"
 )
 app.include_router(github_router)
+app.include_router(graph_skill_router)
 
 # Enable CORS for frontend access
 app.add_middleware(

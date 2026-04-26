@@ -1,31 +1,49 @@
-# worker
+# Worker Service
 
-A project created with FastAPI CLI.
+The worker is a single FastAPI app running from `apps/worker/main.py`.
 
-## Quick Start
+## What Changed
 
-### Start the development server
+- The project previously had a second FastAPI app in `graph_skill/main.py`.
+- Graph skill endpoints are now exposed through the root worker app as an included router.
+- You only need one worker process.
+
+## Run (uv)
+
+From `apps/worker`:
 
 ```bash
+uv sync
 uv run fastapi dev
 ```
 
-Visit http://localhost:8000
+Server URL: `http://localhost:8000`
 
-### Deploy to FastAPI Cloud
+## Endpoints
 
-> FastAPI Cloud is currently in private beta. Join the waitlist at https://fastapicloud.com
+Core worker endpoints:
 
-```bash
-uv run fastapi deploy
-```
+- `GET /`
+- `GET /health`
+- `POST /parse-cv`
+
+GitHub analysis endpoints are mounted from `github/router.py`.
+
+Graph skill endpoints are mounted under `/graph-skill`:
+
+- `POST /graph-skill/rebuild`
+- `GET /graph-skill/graph/{candidate_id}`
+- `GET /graph-skill/health`
 
 ## Project Structure
 
-- `main.py` - Your FastAPI application
-- `pyproject.toml` - Project dependencies
+- `main.py`: Root FastAPI app and worker entrypoint
+- `github/`: GitHub analysis logic and routes
+- `graph_skill/`: Skill graph builder and router
+- `parsers/`: CV parsing code
+- `pyproject.toml`: Python dependencies
 
-## Learn More
+## Notes
 
-- [FastAPI Documentation](https://fastapi.tiangolo.com)
-- [FastAPI Cloud](https://fastapicloud.com)
+- Prefer running from the root worker app (`main.py`) for local dev and team usage.
+- `graph_skill/main.py` now provides a router and can still run standalone for debugging if needed.

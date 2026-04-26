@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import APIRouter, FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Any, Dict, Optional
 import traceback
@@ -11,7 +11,7 @@ from pathlib import Path
 _env_path = Path(__file__).resolve().parents[1] / ".env"
 load_dotenv(dotenv_path=str(_env_path), override=True)
 
-app = FastAPI(title="Graph Skill API", version="0.1.0")
+router = APIRouter(prefix="/graph-skill", tags=["graph-skill"])
 
 
 class RebuildRequest(BaseModel):
@@ -47,7 +47,7 @@ def get_builder():
     return _builder
 
 
-@app.post("/rebuild")
+@router.post("/rebuild")
 async def rebuild(req: RebuildRequest):
     try:
         builder = get_builder()
@@ -58,7 +58,7 @@ async def rebuild(req: RebuildRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/graph/{candidate_id}")
+@router.get("/graph/{candidate_id}")
 async def get_graph(candidate_id: str):
     try:
         builder = get_builder()
@@ -69,7 +69,7 @@ async def get_graph(candidate_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/health")
+@router.get("/health")
 async def health():
     try:
         builder = get_builder()
@@ -83,4 +83,7 @@ async def health():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("apps.worker.graph_skill.main:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)), reload=False)
+
+    app = FastAPI(title="Graph Skill API", version="0.1.0")
+    app.include_router(router)
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)), reload=False)
