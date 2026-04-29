@@ -5,12 +5,16 @@ import logging
 from typing import Any
 
 import psycopg
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.concurrency import run_in_threadpool
 import sys
 from pathlib import Path
+
+from config import get_settings
+from matching.gap_report_agent import GapReportGenerationError, generate_gap_report
+from matching.schemas import GapReportResult, GenerateReportRequest
 
 # Configure logging
 logging.basicConfig(
@@ -19,12 +23,24 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-from config import get_settings
-from matching.gap_report_agent import GapReportGenerationError, generate_gap_report
-from matching.schemas import GapReportResult, GenerateReportRequest
-
 # Add parsers directory to path
+# Ensure the package parent directory and parsers directory are on sys.path
+# so we can import the local `github` package and `parsers` modules when
+# running the app via CLI tooling that may not set package context.
+# sys.path.insert(0, str(Path(__file__).parent))
 sys.path.insert(0, str(Path(__file__).parent / "parsers"))
+
+try:
+    from github.router import router as github_router
+except Exception as e:
+    # Fallback to relative import if running as a package
+    from .github.router import router as github_router
+
+try:
+    from graph_skill.main import router as graph_skill_router
+except Exception:
+    # Fallback to relative import if running as a package
+    from .graph_skill.main import router as graph_skill_router
 
 try:
     from cvParser import CVParser
@@ -37,6 +53,8 @@ app = FastAPI(
     description="API for parsing CV documents and extracting structured information",
     version="1.0.0"
 )
+app.include_router(github_router)
+app.include_router(graph_skill_router)
 
 
 

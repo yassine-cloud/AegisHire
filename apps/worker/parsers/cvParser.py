@@ -12,6 +12,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 try:
+    from dotenv import load_dotenv
+    # Load .env file from the apps directory if present
+    env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env")
+    load_dotenv(dotenv_path=env_path)
+except ImportError:
+    pass
+
+try:
     import fitz  # PyMuPDF
 except ModuleNotFoundError:
     print(
@@ -495,9 +503,11 @@ Rules:
         self.cv.work_experience = work_exp if work_exp else None
 
 
+
 if __name__ == "__main__":
     # Allow passing the PDF path as the first argument; otherwise use the default path.
     pdf_path = sys.argv[1] if len(sys.argv) > 1 else r"D:\users\seif\Downloads\cv4.pdf"
+
 
     if not os.path.exists(pdf_path):
         print(

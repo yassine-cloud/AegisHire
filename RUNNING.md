@@ -119,6 +119,9 @@ cd apps/worker
 uv run fastapi dev
 ```
 
+Note: `graph_skill` routes are served by the same worker app (single FastAPI process)
+under the `/graph-skill` prefix.
+
 You can also start API + Frontend together from root:
 
 ```bash

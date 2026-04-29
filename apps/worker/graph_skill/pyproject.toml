@@ -1,0 +1,15 @@
+[project]
+name = "graph-skill"
+version = "0.1.0"
+description = "A structured, weighted graph of a candidate's real technical skills stored in Neo4j."
+requires-python = ">=3.11"
+dependencies = [
+    "neo4j>=5.21.0",
+    "python-dotenv>=1.0.0",
+    "fastapi>=0.95.0",
+    "uvicorn[standard]>=0.22.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
