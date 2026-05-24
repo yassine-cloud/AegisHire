@@ -1,0 +1,12 @@
+{
+  "gaps": [
+    {
+      "skill": "Kubernetes",
+      "importance": "high",
+      "current_level": "none",
+      "recommendation": "Deploy one project on Minikube.",
+      "estimated_effort": "3-4 weeks"
+    }
+  ],
+  "overall_priority_order": ["Kubernetes"]
+}

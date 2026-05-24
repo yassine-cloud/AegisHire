@@ -4,6 +4,8 @@ import json
 import re
 from dataclasses import dataclass, asdict
 from typing import List, Dict, Any, Optional
+from urllib import request as urlrequest
+from urllib import error as urlerror
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -106,15 +108,21 @@ class CVParser:
         self.text = text
         self.cv = CV()
         self.use_ai = use_ai
+        self.ai_provider: str | None = None
+        self.client: Optional[Groq] = None
 
         if use_ai:
             api_key = os.getenv("GROQ_API_KEY")
-            if not api_key:
+            if api_key:
+                self.ai_provider = "groq"
+                self.client = Groq(api_key=api_key)
+            elif os.getenv("OLLAMA_BASE_URL") and (os.getenv("OLLAMA_MODEL") or os.getenv("LLM_MODEL_NAME")):
+                self.ai_provider = "ollama"
+            else:
                 raise ValueError(
-                    "GROQ_API_KEY environment variable not set. "
-                    "Please set it before running the parser."
+                    "AI parsing requires GROQ_API_KEY or an Ollama setup "
+                    "(OLLAMA_BASE_URL and OLLAMA_MODEL/LLM_MODEL_NAME)."
                 )
-            self.client = Groq(api_key=api_key)
 
     @staticmethod
     def extract_text_from_pdf(pdf_path: str, use_ocr: bool = True) -> str:
@@ -174,7 +182,7 @@ class CVParser:
             return self._parse_with_regex()
 
     def _parse_with_ai(self) -> CV:
-        """Parse CV using Llama via Groq API"""
+        """Parse CV using AI (Groq first, Ollama fallback)."""
         prompt = f"""Extract structured information from this CV text and return valid JSON only (no markdown, no extra text).
 
 CV Text:
@@ -209,16 +217,38 @@ Rules:
 - Return only valid JSON, no additional text"""
 
         try:
-            message = self.client.chat.completions.create(
-                model="llama-3.3-70b-versatile",  # Updated from deprecated mixtral-8x7b-32768
-                max_tokens=2048,
-                response_format={"type": "json_object"},  # Forces clean JSON output, no markdown fences
-                messages=[
-                    {"role": "user", "content": prompt}
-                ]
-            )
-
-            response_text = message.choices[0].message.content.strip()
+            if self.ai_provider == "groq":
+                message = self.client.chat.completions.create(
+                    model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
+                    max_tokens=2048,
+                    response_format={"type": "json_object"},
+                    messages=[
+                        {"role": "user", "content": prompt}
+                    ]
+                )
+                response_text = message.choices[0].message.content.strip()
+            elif self.ai_provider == "ollama":
+                ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
+                ollama_model = os.getenv("OLLAMA_MODEL") or os.getenv("LLM_MODEL_NAME") or "llama3.1:8b"
+                body = json.dumps(
+                    {
+                        "model": ollama_model,
+                        "stream": False,
+                        "format": "json",
+                        "messages": [{"role": "user", "content": prompt}],
+                    }
+                ).encode("utf-8")
+                req = urlrequest.Request(
+                    url=f"{ollama_base_url}/api/chat",
+                    data=body,
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                with urlrequest.urlopen(req, timeout=60) as resp:
+                    ollama_payload = json.loads(resp.read().decode("utf-8"))
+                response_text = (ollama_payload.get("message", {}) or {}).get("content", "").strip()
+            else:
+                raise RuntimeError("Unsupported AI provider for CV parsing.")
 
             # Safety net: strip markdown fences if somehow present
             if "```json" in response_text:
@@ -255,6 +285,9 @@ Rules:
             print(f"Failed to parse AI response as JSON: {e}", file=sys.stderr)
             print(f"Response was: {response_text}", file=sys.stderr)
             # Fallback to regex parsing
+            return self._parse_with_regex()
+        except urlerror.URLError as e:
+            print(f"Ollama request failed: {e}", file=sys.stderr)
             return self._parse_with_regex()
         except Exception as e:
             print(f"AI parsing failed: {e}", file=sys.stderr)

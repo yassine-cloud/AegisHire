@@ -12,4 +12,10 @@ export class UpdateProfileDto {
 		example: 'https://cdn.example.com/resumes/octocat.pdf',
 	})
 	resumeFileUrl?: string;
+
+	@ApiPropertyOptional({
+		description: 'List of skills formatted as a JSON object of arrays',
+		example: { "Languages": ["Python", "JavaScript"] },
+	})
+	skills?: Record<string, string[]>;
 }

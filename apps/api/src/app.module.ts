@@ -1,15 +1,28 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { envValidationSchema } from './config/env.validation';
 import { ProfilesModule } from './profile/profile.module';
+import { RolesModule } from './roles/roles.module';
+import { RedisModule } from './shared/redis/redis.module';
 import { GithubAnalysisModule } from './github-analysis/github-analysis.module';
 
-
-
 @Module({
-  imports: [AuthModule, ProfilesModule, GithubAnalysisModule],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validationSchema: envValidationSchema,
+    }),
+    AuthModule,
+    RedisModule,
+    ProfilesModule,
+    RolesModule,
+    GithubAnalysisModule
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
+
 export class AppModule {}
