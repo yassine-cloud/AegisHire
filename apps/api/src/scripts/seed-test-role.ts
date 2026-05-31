@@ -15,7 +15,10 @@ import type { Prisma } from '@aegishire/db';
 const ROLE_SLUG = 'software-engineer';
 const ROLE_TITLE = 'Software Engineer';
 
-const REQUIRED_SKILLS: Array<{ skill: string; importance: 'high' | 'medium' | 'low' }> = [
+const REQUIRED_SKILLS: Array<{
+  skill: string;
+  importance: 'high' | 'medium' | 'low';
+}> = [
   { skill: 'TypeScript', importance: 'high' },
   { skill: 'Docker', importance: 'high' },
   { skill: 'System Design', importance: 'high' },
@@ -38,7 +41,8 @@ async function main() {
     create: {
       slug: ROLE_SLUG,
       title: ROLE_TITLE,
-      description: 'A general software engineering position requiring full-stack capabilities.',
+      description:
+        'A general software engineering position requiring full-stack capabilities.',
       requiredSkills: REQUIRED_SKILLS as unknown as Prisma.InputJsonValue,
       preferredSkills: [] as unknown as Prisma.InputJsonValue,
     },

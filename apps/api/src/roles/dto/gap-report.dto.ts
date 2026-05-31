@@ -10,7 +10,9 @@ export class GapEntryDto {
   @ApiProperty({ example: 'none', enum: ['none', 'beginner', 'intermediate'] })
   current_level!: 'none' | 'beginner' | 'intermediate';
 
-  @ApiProperty({ example: 'Deploy one project on Minikube using Deployments and Services.' })
+  @ApiProperty({
+    example: 'Deploy one project on Minikube using Deployments and Services.',
+  })
   recommendation!: string;
 
   @ApiProperty({ example: '3-4 weeks' })

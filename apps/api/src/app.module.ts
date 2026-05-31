@@ -8,6 +8,7 @@ import { ProfilesModule } from './profile/profile.module';
 import { RolesModule } from './roles/roles.module';
 import { RedisModule } from './shared/redis/redis.module';
 import { GithubAnalysisModule } from './github-analysis/github-analysis.module';
+import { GraphSkillModule } from './graph-skill/graph-skill.module';
 
 @Module({
   imports: [
@@ -19,10 +20,10 @@ import { GithubAnalysisModule } from './github-analysis/github-analysis.module';
     RedisModule,
     ProfilesModule,
     RolesModule,
-    GithubAnalysisModule
+    GithubAnalysisModule,
+    GraphSkillModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-
 export class AppModule {}

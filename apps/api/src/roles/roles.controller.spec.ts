@@ -1,5 +1,11 @@
 import '../../test/mocks/jose.mock';
-import { BadRequestException, CanActivate, ExecutionContext, INestApplication, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  CanActivate,
+  ExecutionContext,
+  INestApplication,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
@@ -8,7 +14,10 @@ import { RolesService } from './roles.service';
 
 class HeaderAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
-    const req = context.switchToHttp().getRequest<{ headers: { authorization?: string }; user?: { id: string } }>();
+    const req = context.switchToHttp().getRequest<{
+      headers: { authorization?: string };
+      user?: { id: string };
+    }>();
     if (!req.headers.authorization) {
       throw new UnauthorizedException('Missing Authorization header');
     }
@@ -75,7 +84,9 @@ describe('RolesController', () => {
   });
 
   it('GET /roles/:id/gap-report returns 401 with no auth', async () => {
-    await request(app.getHttpServer()).get('/roles/senior-backend-engineer/gap-report').expect(401);
+    await request(app.getHttpServer())
+      .get('/roles/senior-backend-engineer/gap-report')
+      .expect(401);
   });
 
   it('POST /roles/test-setup returns 200 with valid auth', async () => {
@@ -105,7 +116,8 @@ describe('RolesController', () => {
       new BadRequestException({
         statusCode: 400,
         error: 'NO_GAPS_ABOVE_THRESHOLD',
-        message: 'Candidate already meets or exceeds the threshold for this role.',
+        message:
+          'Candidate already meets or exceeds the threshold for this role.',
         timestamp: new Date().toISOString(),
       }),
     );

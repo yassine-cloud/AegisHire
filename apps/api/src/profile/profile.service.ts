@@ -11,7 +11,9 @@ export class ProfilesService {
   constructor(private readonly redisService: RedisService) {}
 
   private skillsPayloadHasEntries(skills: Record<string, string[]>): boolean {
-    return Object.values(skills).some((items) => Array.isArray(items) && items.length > 0);
+    return Object.values(skills).some(
+      (items) => Array.isArray(items) && items.length > 0,
+    );
   }
 
   getProfile(userId: string): Promise<Profile | null> {
@@ -20,13 +22,17 @@ export class ProfilesService {
     });
   }
 
-  async updateProfile(userId: string, updateProfileDto: UpdateProfileDto): Promise<Profile> {
+  async updateProfile(
+    userId: string,
+    updateProfileDto: UpdateProfileDto,
+  ): Promise<Profile> {
     const skillsJson = updateProfileDto.skills
       ? (updateProfileDto.skills as unknown as Prisma.InputJsonValue)
       : undefined;
     const graphBuiltAt =
       updateProfileDto.skills !== undefined
-        ? updateProfileDto.skills && this.skillsPayloadHasEntries(updateProfileDto.skills)
+        ? updateProfileDto.skills &&
+          this.skillsPayloadHasEntries(updateProfileDto.skills)
           ? new Date()
           : null
         : undefined;
@@ -53,8 +59,11 @@ export class ProfilesService {
     try {
       await this.redisService.delByPattern(`gap_report:${userId}:*`);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'unknown error';
-      this.logger.warn(`Failed to invalidate gap-report cache for candidate ${userId}: ${errorMessage}`);
+      const errorMessage =
+        error instanceof Error ? error.message : 'unknown error';
+      this.logger.warn(
+        `Failed to invalidate gap-report cache for candidate ${userId}: ${errorMessage}`,
+      );
     }
 
     return profile;
