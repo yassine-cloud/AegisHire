@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetchClient } from "@/lib/api.client";
+import { saveGithubAnalysisResult } from "@/lib/github-analysis-cache";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Loader2, GitBranch, CheckCircle2, AlertCircle } from "lucide-react";
@@ -30,6 +31,9 @@ export function GithubAnalysisCard({ githubUsername, initialAnalyzedAt }: { gith
         } catch(e) {}
         throw new Error(errorMsg);
       }
+
+      const analysisResult = await res.json();
+      saveGithubAnalysisResult(githubUsername, analysisResult);
       
       router.refresh(); // Refresh page to update initialAnalyzedAt from server
     } catch (e: any) {

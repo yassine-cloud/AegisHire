@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetchClient } from "@/lib/api.client";
+import {
+  loadGithubAnalysisResult,
+  saveGithubAnalysisResult,
+} from "@/lib/github-analysis-cache";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Loader2, Network, CheckCircle2, AlertCircle } from "lucide-react";
@@ -12,18 +16,50 @@ export function GraphSkillBuilder({ candidateId, candidateName, cvData, githubUs
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const getGithubAnalysisData = async () => {
+    if (!githubUsername) {
+      return {};
+    }
+
+    const cachedAnalysis = loadGithubAnalysisResult(githubUsername);
+    if (cachedAnalysis) {
+      return cachedAnalysis;
+    }
+
+    const analyzeResponse = await apiFetchClient("/github-analysis/trigger", {
+      method: "POST",
+      body: JSON.stringify({ githubUsername }),
+    });
+
+    if (!analyzeResponse.ok) {
+      let errorMsg = "Failed to analyze GitHub profile";
+      try {
+        const data = await analyzeResponse.json();
+        if (data.message) errorMsg = data.message;
+      } catch (e) {}
+      throw new Error(errorMsg);
+    }
+
+    const analysisResult = await analyzeResponse.json();
+    saveGithubAnalysisResult(githubUsername, analysisResult);
+
+    return analysisResult;
+  };
+
   const handleRebuild = async () => {
     if (!candidateId) return;
     setLoading(true);
     setError(null);
     try {
+      const githubAnalysisData = await getGithubAnalysisData();
+
       const res = await apiFetchClient("/graph-skill/rebuild", {
         method: "POST",
         body: JSON.stringify({
           candidateId,
           candidateName: candidateName || "Unknown",
           cvData: cvData || {},
-          githubData: githubUsername ? { github_username: githubUsername } : {},
+          githubData: githubAnalysisData,
         }),
       });
       
