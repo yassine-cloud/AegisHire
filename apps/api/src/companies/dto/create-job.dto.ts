@@ -1,0 +1,24 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+export class CreateJobDto {
+  @ApiProperty({ example: 'Senior Frontend Engineer' })
+  title!: string;
+
+  @ApiPropertyOptional({ example: 'Remote' })
+  location?: string;
+
+  @ApiPropertyOptional({ example: 'full-time' })
+  employmentType?: string;
+
+  @ApiProperty({ example: 'Build the company career platform.' })
+  description!: string;
+
+  @ApiPropertyOptional({ example: ['Ship production UI', 'Own design systems'] })
+  responsibilities?: string[];
+
+  @ApiPropertyOptional({ example: ['React', 'TypeScript', 'Next.js'] })
+  requirements?: string[];
+
+  @ApiPropertyOptional({ example: '$90k - $130k' })
+  salaryRange?: string;
+}

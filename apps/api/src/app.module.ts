@@ -8,6 +8,8 @@ import { ProfilesModule } from './profile/profile.module';
 import { RolesModule } from './roles/roles.module';
 import { RedisModule } from './shared/redis/redis.module';
 import { GithubAnalysisModule } from './github-analysis/github-analysis.module';
+import { CompaniesModule } from './companies/companies.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { GithubAnalysisModule } from './github-analysis/github-analysis.module';
     AuthModule,
     RedisModule,
     ProfilesModule,
+    CompaniesModule,
+    AdminModule,
     RolesModule,
     GithubAnalysisModule
   ],
