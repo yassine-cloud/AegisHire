@@ -2695,13 +2695,9 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "neo4j" },
     { name = "pytest" },
     { name = "pytest-cov" },
-    { name = "neo4j" },
-    { name = "pillow" },
-    { name = "pymupdf" },
-    { name = "pytesseract" },
-    { name = "python-dotenv" },
 ]
 
 [package.metadata]
@@ -2718,8 +2714,6 @@ requires-dist = [
     { name = "pillow", specifier = ">=10.0.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2.0" },
     { name = "pydantic-settings", specifier = ">=2.5.2" },
-    { name = "neo4j", specifier = ">=6.1.0" },
-    { name = "pillow", specifier = ">=10.0.0" },
     { name = "pymupdf", specifier = ">=1.24.0" },
     { name = "pytesseract", specifier = ">=0.3.10" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
@@ -2727,6 +2721,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "neo4j", specifier = ">=6.1.0" },
     { name = "pytest", specifier = ">=9.0.3" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
 ]

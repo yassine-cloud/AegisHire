@@ -4,7 +4,7 @@ import { prisma } from '@aegishire/db';
 @Injectable()
 export class GithubAnalysisService {
   async triggerAnalysis(userId: string, githubUsername: string) {
-    const workerUrl = process.env.WORKER_URL ?? 'http://localhost:8000';
+    const workerUrl = process.env.WORKER_URL ?? 'http://127.0.0.1:8000';
 
     const response = await fetch(`${workerUrl}/analyze/github`, {
       method: 'POST',
