@@ -1,6 +1,7 @@
+import { createServerClient } from '@supabase/ssr'
 import { type NextRequest, NextResponse } from 'next/server'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001'
 
 const roleRouteMap: Record<string, string[]> = {
   developer: ['/profile'],
@@ -8,66 +9,85 @@ const roleRouteMap: Record<string, string[]> = {
   admin: ['/profile', '/company', '/admin'],
 }
 
+const defaultRouteByRole: Record<string, string> = {
+  developer: '/profile',
+  company: '/company',
+  admin: '/admin',
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Skip middleware for auth, callback, and public routes
-  if (pathname.startsWith('/auth') || pathname === '/' || pathname.includes('_next')) {
+  if (pathname.startsWith('/auth') || pathname.startsWith('/_next') || pathname === '/') {
     return NextResponse.next()
   }
 
-  // Get token from cookies
-  const token = request.cookies.get('sb-access-token')?.value
+  const response = NextResponse.next({ request })
 
-  // For protected routes, check role-based access
-  if (pathname.startsWith('/profile') || pathname.startsWith('/company') || pathname.startsWith('/admin')) {
-    if (!token) {
-      return NextResponse.redirect(new URL('/auth/login', request.url))
-    }
-
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
-
-      const profileResponse = await fetch(`${API_BASE_URL}/api/v1/profile/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
         },
-        signal: controller.signal,
-      })
-
-      clearTimeout(timeoutId);
-
-      if (profileResponse.ok) {
-        const profile = await profileResponse.json()
-        const accountType = profile.accountType || 'developer'
-        const allowedRoutes = roleRouteMap[accountType] || roleRouteMap['developer']
-
-        // Check if user can access this route
-        const canAccess = allowedRoutes.some(route => pathname.startsWith(route))
-
-        if (!canAccess) {
-          // Redirect to their default page
-          const defaultRoutes: Record<string, string> = {
-            developer: '/profile',
-            company: '/company',
-            admin: '/admin',
-          }
-          const redirectPath = defaultRoutes[accountType] || '/profile'
-          return NextResponse.redirect(new URL(redirectPath, request.url))
-        }
-      }
-    } catch (err) {
-      // On error, allow the request to continue (the page handler will validate)
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options)
+          })
+        },
+      },
     }
+  )
+
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return NextResponse.redirect(new URL('/auth/login', request.url))
   }
 
-  return NextResponse.next()
+  const { data: { session } } = await supabase.auth.getSession()
+  const token = session?.access_token
+
+  if (!token) {
+    return NextResponse.redirect(new URL('/auth/login', request.url))
+  }
+
+  let accountType = 'developer'
+
+  try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 3000)
+
+    const profileResponse = await fetch(`${API_BASE_URL}/api/v1/profile/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      signal: controller.signal,
+    })
+
+    clearTimeout(timeoutId)
+
+    if (profileResponse.ok) {
+      const profile = await profileResponse.json()
+      accountType = profile.accountType || 'developer'
+    }
+  } catch {
+    // Fall back to developer if the profile lookup fails.
+  }
+
+  const allowedRoutes = roleRouteMap[accountType] || roleRouteMap.developer
+  const canAccess = allowedRoutes.some((route) => pathname.startsWith(route))
+
+  if (!canAccess) {
+    return NextResponse.redirect(new URL(defaultRouteByRole[accountType] || '/profile', request.url))
+  }
+
+  return response
 }
 
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|public/).*)'],
 }
