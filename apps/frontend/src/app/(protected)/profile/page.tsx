@@ -1,5 +1,8 @@
 import { apiFetchServer } from "@/lib/api.server";
+import { createClient } from "@/lib/supabase/server";
 import ProfileForm from "@/components/ProfileForm";
+import { GithubAnalysisCard } from "@/components/GithubAnalysisCard";
+import { GraphSkillBuilder } from "@/components/GraphSkillBuilder";
 import Link from "next/link";
 import { FlaskConical } from "lucide-react";
 
@@ -8,6 +11,10 @@ export const metadata = {
 };
 
 export default async function ProfilePage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const candidateName = user?.user_metadata?.full_name || user?.email || "";
+
   const response = await apiFetchServer("/profile/me");
 
   let profileData: any = null;
@@ -57,6 +64,22 @@ export default async function ProfilePage() {
           isNew={isNewProfile}
         />
       </div>
+
+      {!isNewProfile && profileData && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <GithubAnalysisCard 
+            githubUsername={profileData.githubUsername} 
+            initialAnalyzedAt={profileData.githubAnalyzedAt} 
+          />
+          <GraphSkillBuilder 
+            candidateId={profileData.userId} 
+            candidateName={candidateName}
+            cvData={{ skills: profileData.skills ?? {} }}
+            githubUsername={profileData.githubUsername}
+            initialBuiltAt={profileData.graphBuiltAt} 
+          />
+        </div>
+      )}
     </div>
   );
 }
