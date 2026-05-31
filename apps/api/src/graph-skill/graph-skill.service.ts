@@ -31,9 +31,7 @@ export class GraphSkillService {
       const detail = await response.text().catch(() => 'Unknown error');
       throw new HttpException(
         `Graph rebuild failed: ${detail}`,
-        response.status >= 500
-          ? HttpStatus.BAD_GATEWAY
-          : (response.status as number),
+        response.status >= 500 ? HttpStatus.BAD_GATEWAY : response.status,
       );
     }
 
@@ -53,9 +51,7 @@ export class GraphSkillService {
       const detail = await response.text().catch(() => 'Unknown error');
       throw new HttpException(
         `Graph retrieval failed: ${detail}`,
-        response.status === 404
-          ? HttpStatus.NOT_FOUND
-          : HttpStatus.BAD_GATEWAY,
+        response.status === 404 ? HttpStatus.NOT_FOUND : HttpStatus.BAD_GATEWAY,
       );
     }
 

@@ -2,7 +2,6 @@ import { Controller, Post, Body, UseGuards, Request } from '@nestjs/common';
 import { GithubAnalysisService } from './github-analysis.service';
 import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
 
-
 @Controller('github-analysis')
 export class GithubAnalysisController {
   constructor(private readonly service: GithubAnalysisService) {}

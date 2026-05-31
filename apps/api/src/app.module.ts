@@ -21,10 +21,9 @@ import { GraphSkillModule } from './graph-skill/graph-skill.module';
     ProfilesModule,
     RolesModule,
     GithubAnalysisModule,
-    GraphSkillModule
+    GraphSkillModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-
 export class AppModule {}

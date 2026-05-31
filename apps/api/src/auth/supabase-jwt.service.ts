@@ -1,5 +1,10 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { createRemoteJWKSet, jwtVerify, type JWTPayload, type JWTVerifyOptions } from 'jose';
+import {
+  createRemoteJWKSet,
+  jwtVerify,
+  type JWTPayload,
+  type JWTVerifyOptions,
+} from 'jose';
 
 export type SupabaseJwtPayload = JWTPayload & {
   id: string;
@@ -24,8 +29,11 @@ export class SupabaseJwtService {
     this.jwtSecret = jwtSecret && jwtSecret.length > 0 ? jwtSecret : undefined;
     const supabaseUrl = process.env.SUPABASE_URL?.trim()?.replace(/\/+$/, '');
     this.supabaseUrl = supabaseUrl;
-    this.issuer = process.env.SUPABASE_JWT_ISSUER?.trim() || (supabaseUrl ? `${supabaseUrl}/auth/v1` : undefined);
-    this.audience = process.env.SUPABASE_JWT_AUDIENCE?.trim() || 'authenticated';
+    this.issuer =
+      process.env.SUPABASE_JWT_ISSUER?.trim() ||
+      (supabaseUrl ? `${supabaseUrl}/auth/v1` : undefined);
+    this.audience =
+      process.env.SUPABASE_JWT_AUDIENCE?.trim() || 'authenticated';
   }
 
   private getVerificationConfig(): {
@@ -33,7 +41,8 @@ export class SupabaseJwtService {
     issuer?: string;
   } {
     if (!this.audience) {
-      this.audience = process.env.SUPABASE_JWT_AUDIENCE?.trim() || 'authenticated';
+      this.audience =
+        process.env.SUPABASE_JWT_AUDIENCE?.trim() || 'authenticated';
     }
 
     return {
@@ -56,7 +65,9 @@ export class SupabaseJwtService {
     }
 
     if (!this.jwks) {
-      const jwksUrl = process.env.SUPABASE_JWKS_URL?.trim() || `${this.supabaseUrl}/auth/v1/.well-known/jwks.json`;
+      const jwksUrl =
+        process.env.SUPABASE_JWKS_URL?.trim() ||
+        `${this.supabaseUrl}/auth/v1/.well-known/jwks.json`;
       this.jwks = createRemoteJWKSet(new URL(jwksUrl));
     }
 
@@ -76,7 +87,11 @@ export class SupabaseJwtService {
 
     if (this.jwtSecret) {
       try {
-        const result = await jwtVerify(token, this.getSecretKey(), verifyOptions);
+        const result = await jwtVerify(
+          token,
+          this.getSecretKey(),
+          verifyOptions,
+        );
         payload = result.payload;
       } catch {
         payload = null;

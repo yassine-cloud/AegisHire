@@ -15,7 +15,8 @@ export class TestSetupRequestDto {
 
   @ApiPropertyOptional({
     example: 40,
-    description: 'Compatibility score persisted in role match (must be below 70 for gap-report testing).',
+    description:
+      'Compatibility score persisted in role match (must be below 70 for gap-report testing).',
   })
   compatibilityScore?: number;
 

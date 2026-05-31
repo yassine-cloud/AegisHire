@@ -1,4 +1,10 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import type { Request } from 'express';
 import type { SupabaseJwtPayload } from './supabase-jwt.service';
 
@@ -18,9 +24,10 @@ export class EmailVerifiedGuard implements CanActivate {
 
     const emailVerified = Boolean(
       user.email_confirmed_at ||
-        user.confirmed_at ||
-        user.user_metadata?.email_verified ||
-        (user as SupabaseJwtPayload & { email_verified?: boolean }).email_verified,
+      user.confirmed_at ||
+      user.user_metadata?.email_verified ||
+      (user as SupabaseJwtPayload & { email_verified?: boolean })
+        .email_verified,
     );
 
     if (!emailVerified) {

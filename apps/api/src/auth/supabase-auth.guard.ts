@@ -1,6 +1,14 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import type { Request } from 'express';
-import { SupabaseJwtService, type SupabaseJwtPayload } from './supabase-jwt.service';
+import {
+  SupabaseJwtService,
+  type SupabaseJwtPayload,
+} from './supabase-jwt.service';
 
 type RequestWithUser = Request & {
   user?: SupabaseJwtPayload;
