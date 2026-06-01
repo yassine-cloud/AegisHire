@@ -123,13 +123,29 @@ def generate_gap_report(
     logging.info(f"Normalized {len(normalized_missing_skills)} missing skills")
 
     missing_skills_with_levels: list[dict[str, str]] = []
+    
+    # Try fetching real candidate skills from Neo4j
+    from matching.neo4j_reader import Neo4jReader, map_confidence_to_level
+    candidate_skills = {}
+    reader = Neo4jReader()
+    try:
+        candidate_skills = reader.get_candidate_skills(candidate_id)
+    except Exception as exc:
+        logging.error(f"Failed to fetch candidate skills from Neo4j: {exc}", exc_info=True)
+    finally:
+        reader.close()
+
     for missing_skill in normalized_missing_skills:
-        # Defaulting all missing skills to level "none"
+        # Check if the candidate actually has this skill with low confidence
+        skill_name_lower = missing_skill.skill.lower()
+        confidence = candidate_skills.get(skill_name_lower)
+        current_level = map_confidence_to_level(confidence)
+        
         missing_skills_with_levels.append(
             {
                 "skill": missing_skill.skill,
                 "importance": missing_skill.importance,
-                "current_level": "none",
+                "current_level": current_level,
             }
         )
 
