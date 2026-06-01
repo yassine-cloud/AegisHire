@@ -85,6 +85,14 @@ export default function ProfileForm({ initialData, isNew }: ProfileFormProps) {
     ? Object.values(skills).flat().length
     : 0;
 
+  const normalizedSkillsEntries = skills
+    ? Object.entries(skills).filter(([, categorySkills]) => Array.isArray(categorySkills))
+    : [];
+
+  const normalizedInitialSkillEntries = initialData.skills
+    ? Object.entries(initialData.skills).filter(([, categorySkills]) => Array.isArray(categorySkills))
+    : [];
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -428,106 +436,106 @@ export default function ProfileForm({ initialData, isNew }: ProfileFormProps) {
             </div>
           )}
 
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={!selectedFile || parsing}
-            onClick={handleParseCV}
-            className="w-full"
-          >
-            {parsing ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Extracting skills...
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-4 w-4 mr-2" />
-                Extract Skills with AI
-              </>
-            )}
-          </Button>
+<Button
+  type="button"
+  variant="secondary"
+  disabled={!selectedFile || parsing}
+  onClick={handleParseCV}
+  className="w-full"
+>
+  {parsing ? (
+    <>
+      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+      Extracting skills...
+    </>
+  ) : (
+    <>
+      <Sparkles className="h-4 w-4 mr-2" />
+      Extract Skills with AI
+    </>
+  )}
+</Button>
 
-          {/* Extracted Skills Display */}
-          {skills && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Tags className="h-4 w-4" />
-                  Extracted Skills
-                  {parsingMode && (
-                    <Badge variant="secondary" className="ml-auto text-xs font-normal">
-                      {parsingMode} parsing
-                    </Badge>
-                  )}
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  {totalSkillCount} skill{totalSkillCount !== 1 ? "s" : ""} extracted
-                  across {Object.keys(skills).length} categories. Remove any that don&apos;t apply.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {Object.entries(skills).map(([category, categorySkills]) => (
-                  <div key={category}>
-                    <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
-                      {category}
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {categorySkills.map((skill) => (
-                        <Badge
-                          key={skill}
-                          variant="secondary"
-                          className="gap-1 pr-1 group"
+        {/* Extracted Skills Display */}
+        {skills && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Tags className="h-4 w-4" />
+                Extracted Skills
+                {parsingMode && (
+                  <Badge variant="secondary" className="ml-auto text-xs font-normal">
+                    {parsingMode} parsing
+                  </Badge>
+                )}
+              </CardTitle>
+              <CardDescription className="text-xs">
+                {totalSkillCount} skill{totalSkillCount !== 1 ? "s" : ""} extracted
+                across {Object.keys(skills).length} categories. Remove any that don&apos;t apply.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {normalizedSkillsEntries.map(([category, categorySkills]) => (
+                <div key={category}>
+                  <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
+                    {category}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(categorySkills as string[]).map((skill) => (
+                      <Badge
+                        key={skill}
+                        variant="secondary"
+                        className="gap-1 pr-1 group"
+                      >
+                        {skill}
+                        <button
+                          type="button"
+                          onClick={() => removeSkill(category, skill)}
+                          className="ml-0.5 rounded-full opacity-60 hover:opacity-100 transition-opacity"
+                          aria-label={`Remove ${skill}`}
                         >
-                          {skill}
-                          <button
-                            type="button"
-                            onClick={() => removeSkill(category, skill)}
-                            className="ml-0.5 rounded-full opacity-60 hover:opacity-100 transition-opacity"
-                            aria-label={`Remove ${skill}`}
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
                   </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
 
-          {/* Existing skills from profile (if no new extraction done) */}
-          {!skills && initialData.skills && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Tags className="h-4 w-4" />
-                  Current Profile Skills
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Skills currently saved to your profile. Upload a new CV to update.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {Object.entries(initialData.skills).map(([category, categorySkills]) => (
-                  <div key={category}>
-                    <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
-                      {category}
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {(categorySkills as string[]).map((skill) => (
-                        <Badge key={skill} variant="outline">
-                          {skill}
-                        </Badge>
-                      ))}
-                    </div>
+        {/* Existing skills from profile (if no new extraction done) */}
+        {!skills && initialData.skills && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Tags className="h-4 w-4" />
+                Current Profile Skills
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Skills currently saved to your profile. Upload a new CV to update.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {normalizedInitialSkillEntries.map(([category, categorySkills]) => (
+                <div key={category}>
+                  <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
+                    {category}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(categorySkills as string[]).map((skill) => (
+                      <Badge key={skill} variant="outline">
+                        {skill}
+                      </Badge>
+                    ))}
                   </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-        </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
         <div className="flex justify-end">
           <Button type="submit" disabled={detailsLoading} className="w-full sm:w-auto">
