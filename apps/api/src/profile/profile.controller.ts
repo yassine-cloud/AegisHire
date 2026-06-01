@@ -43,11 +43,8 @@ export class ProfilesController {
     description: 'Upserts profile data for the current authenticated user',
   })
   @Patch('me')
-  updateMe(
-    @CurrentUser() user: SupabaseJwtPayload,
-    @Body() updateProfileDto: UpdateProfileDto,
-  ): Promise<Profile> {
-    return this.profilesService.updateProfile(user.id, updateProfileDto);
+  updateMe(@CurrentUser() user: SupabaseJwtPayload, @Body() updateProfileDto: UpdateProfileDto): Promise<Profile> {
+    return this.profilesService.updateProfile(user, updateProfileDto);
   }
 
   @ApiOperation({ summary: 'Delete current user profile' })

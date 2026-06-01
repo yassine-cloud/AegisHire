@@ -1,10 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import {
-  createRemoteJWKSet,
-  jwtVerify,
-  type JWTPayload,
-  type JWTVerifyOptions,
-} from 'jose';
+import { createRemoteJWKSet, jwtVerify, type JWTPayload, type JWTVerifyOptions } from 'jose';
+import { prisma, AccountType } from '@aegishire/db';
 
 export type SupabaseJwtPayload = JWTPayload & {
   id: string;
@@ -14,6 +10,7 @@ export type SupabaseJwtPayload = JWTPayload & {
   user_metadata?: {
     email_verified?: boolean;
   };
+  accountType: AccountType;
 };
 
 @Injectable()
@@ -117,9 +114,15 @@ export class SupabaseJwtService {
       throw new UnauthorizedException('Token subject is missing');
     }
 
+    // get the rest of the user info from the profile table 
+    const profile = await prisma.profile.findUnique({
+      where: { userId: subject }
+    });
+
     return {
       ...(payload as Omit<SupabaseJwtPayload, 'id'>),
       id: subject,
+      accountType: profile?.accountType || AccountType.developer,
     };
   }
 }

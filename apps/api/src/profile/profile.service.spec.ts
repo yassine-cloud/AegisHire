@@ -1,12 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProfilesService } from './profile.service';
+import { RedisService } from '../shared/redis/redis.service';
 
 describe('ProfilesService', () => {
   let service: ProfilesService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ProfilesService],
+      providers: [
+        ProfilesService,
+        {
+          provide: RedisService,
+          useValue: { delByPattern: jest.fn() },
+        },
+      ],
     }).compile();
 
     service = module.get<ProfilesService>(ProfilesService);
