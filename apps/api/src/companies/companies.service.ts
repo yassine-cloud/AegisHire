@@ -16,6 +16,10 @@ type ProvisionedCompany = {
   authUserId: string;
 };
 
+type AvailableJobRecord = Job & {
+  company: Pick<Company, 'id' | 'name' | 'industry' | 'size' | 'websiteUrl' | 'contactEmail'>;
+};
+
 @Injectable()
 export class CompaniesService {
   private readonly logger = new Logger(CompaniesService.name);
@@ -28,6 +32,62 @@ export class CompaniesService {
 
   listCompanies(): Promise<Company[]> {
     return prisma.company.findMany({ orderBy: { createdAt: 'desc' } });
+  }
+
+  listAvailableJobs(): Promise<AvailableJobRecord[]> {
+    return prisma.job.findMany({
+      where: {
+        status: 'published',
+        archivedAt: null,
+        company: {
+          archivedAt: null,
+        },
+      },
+      include: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+            industry: true,
+            size: true,
+            websiteUrl: true,
+            contactEmail: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getAvailableJob(jobId: string): Promise<AvailableJobRecord> {
+    const job = await prisma.job.findFirst({
+      where: {
+        id: jobId,
+        status: 'published',
+        archivedAt: null,
+        company: {
+          archivedAt: null,
+        },
+      },
+      include: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+            industry: true,
+            size: true,
+            websiteUrl: true,
+            contactEmail: true,
+          },
+        },
+      },
+    });
+
+    if (!job) {
+      throw new NotFoundException('Job not found');
+    }
+
+    return job;
   }
 
   async upsertMyCompany(user: SupabaseJwtPayload, payload: UpsertCompanyDto): Promise<Company> {

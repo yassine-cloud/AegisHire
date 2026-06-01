@@ -77,6 +77,11 @@ export default async function ProtectedLayout({
               <Link href="/profile" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
                 Profile
               </Link>
+              {accountType === 'developer' && (
+                <Link href="/jobs" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
+                  Jobs
+                </Link>
+              )}
               {(accountType === 'company') && (
                 <Link href="/company" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
                   Company

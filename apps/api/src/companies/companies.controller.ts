@@ -40,6 +40,20 @@ export class CompaniesController {
     return this.companiesService.listMyJobs(user.id);
   }
 
+  @ApiOperation({ summary: 'List available jobs for developers' })
+  @ApiOkResponse({ description: 'Returns published jobs and their company information' })
+  @Get('jobs')
+  listAvailableJobs(): ReturnType<CompaniesService['listAvailableJobs']> {
+    return this.companiesService.listAvailableJobs();
+  }
+
+  @ApiOperation({ summary: 'Get a published job by id for developers' })
+  @ApiOkResponse({ description: 'Returns a published job and its company information' })
+  @Get('jobs/:jobId')
+  getAvailableJob(@Param('jobId') jobId: string): ReturnType<CompaniesService['getAvailableJob']> {
+    return this.companiesService.getAvailableJob(jobId);
+  }
+
   @ApiOperation({ summary: 'Create a new company job post' })
   @ApiOkResponse({ description: 'Creates a new job associated with the authenticated company' })
   @Post('me/jobs')
