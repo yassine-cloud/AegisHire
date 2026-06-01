@@ -2,6 +2,9 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { AccountType } from '@aegishire/db';
 
 export class UpdateAdminAccountDto {
+  @ApiPropertyOptional({ example: 'Acme Admin' })
+  displayName?: string;
+
   @ApiPropertyOptional({ enum: AccountType, example: AccountType.developer })
   accountType?: AccountType;
 

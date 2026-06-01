@@ -8,6 +8,15 @@ import { CreateAdminAccountDto } from './dto/create-admin-account.dto';
 import { UpdateAdminAccountDto } from './dto/update-admin-account.dto';
 
 type AdminAccountRecord = Profile & { company?: Company | null };
+type AdminAuthUser = {
+  id: string;
+  email?: string | null;
+  user_metadata?: {
+    display_name?: string | null;
+    full_name?: string | null;
+    name?: string | null;
+  } | null;
+};
 type CreatedAdminAccount = {
   profile: AdminAccountRecord;
   email: string;
@@ -19,27 +28,90 @@ type CreatedAdminAccount = {
 export class AdminService {
   constructor(private readonly adminAccessService: AdminAccessService) {}
 
+  private getSupabaseAdminConfig(): { supabaseUrl: string; serviceRoleKey: string } {
+    const supabaseUrl = process.env.SUPABASE_URL?.trim()?.replace(/\/+$/, '');
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      throw new ServiceUnavailableException('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required to manage accounts');
+    }
+
+    return { supabaseUrl, serviceRoleKey };
+  }
+
+  private getAuthDisplayName(user?: AdminAuthUser | null): string | null {
+    return user?.user_metadata?.display_name ?? user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? null;
+  }
+
+  private async fetchSupabaseAuthUsers(): Promise<Map<string, AdminAuthUser>> {
+    const { supabaseUrl, serviceRoleKey } = this.getSupabaseAdminConfig();
+    const response = await fetch(`${supabaseUrl}/auth/v1/admin/users?per_page=1000&page=1`, {
+      headers: {
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => '');
+      throw new InternalServerErrorException(`Failed to list Supabase auth users: ${response.status} ${errorBody}`);
+    }
+
+    const data = (await response.json()) as { users?: AdminAuthUser[] };
+    return new Map((data.users || []).map((user) => [user.id, user]));
+  }
+
+  private async updateSupabaseAuthUser(userId: string, updates: { displayName?: string; accountType?: AccountType }): Promise<void> {
+    const { supabaseUrl, serviceRoleKey } = this.getSupabaseAdminConfig();
+    const response = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
+      method: 'PUT',
+      headers: {
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        user_metadata: {
+          ...(updates.displayName ? { display_name: updates.displayName, full_name: updates.displayName } : {}),
+          ...(updates.accountType ? { account_type: updates.accountType } : {}),
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => '');
+      throw new InternalServerErrorException(`Failed to update Supabase auth user: ${response.status} ${errorBody}`);
+    }
+  }
+
+  private enrichProfile(profile: AdminAccountRecord, authUser?: AdminAuthUser | null): AdminAccountRecord & { email?: string | null; displayName?: string | null } {
+    return {
+      ...profile,
+      email: authUser?.email ?? null,
+      displayName: this.getAuthDisplayName(authUser),
+    };
+  }
+
   private assertAdmin(user: SupabaseJwtPayload): void {
     if (!this.adminAccessService.isAdmin(user)) {
       throw new ForbiddenException('Admin access required');
     }
   }
 
-  listAccounts(): Promise<AdminAccountRecord[]> {
-    return prisma.profile.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: { company: true },
-    });
+  async listAccounts(): Promise<Array<AdminAccountRecord & { email?: string | null; displayName?: string | null }>> {
+    const [profiles, authUsers] = await Promise.all([
+      prisma.profile.findMany({
+        orderBy: { createdAt: 'desc' },
+        include: { company: true },
+      }),
+      this.fetchSupabaseAuthUsers(),
+    ]);
+
+    return profiles.map((profile) => this.enrichProfile(profile, authUsers.get(profile.userId)));
   }
 
-  private async createSupabaseAuthUser(email: string, password: string): Promise<string> {
-    const supabaseUrl = process.env.SUPABASE_URL?.trim()?.replace(/\/+$/, '');
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
-
-    if (!supabaseUrl || !serviceRoleKey) {
-      throw new ServiceUnavailableException('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required to create accounts');
-    }
-
+  private async createSupabaseAuthUser(email: string, password: string, displayName: string, accountType: AccountType): Promise<string> {
+    const { supabaseUrl, serviceRoleKey } = this.getSupabaseAdminConfig();
     const response = await fetch(`${supabaseUrl}/auth/v1/admin/users`, {
       method: 'POST',
       headers: {
@@ -51,7 +123,11 @@ export class AdminService {
         email,
         password,
         email_confirm: true,
-        user_metadata: { account_type: AccountType.developer },
+        user_metadata: {
+          account_type: accountType,
+          display_name: displayName,
+          full_name: displayName,
+        },
       }),
     });
 
@@ -73,8 +149,9 @@ export class AdminService {
     this.assertAdmin(user);
 
     const email = payload.email.trim().toLowerCase();
+    const displayName = payload.displayName.trim();
     const password = payload.password?.trim() || randomBytes(12).toString('base64url');
-    const authUserId = await this.createSupabaseAuthUser(email, password);
+    const authUserId = await this.createSupabaseAuthUser(email, password, displayName, payload.accountType);
 
     await prisma.profile.upsert({
       where: { userId: authUserId },
@@ -113,7 +190,14 @@ export class AdminService {
     }
 
     return {
-      profile,
+      profile: this.enrichProfile(profile, {
+        id: authUserId,
+        email,
+        user_metadata: {
+          display_name: displayName,
+          full_name: displayName,
+        },
+      }),
       email,
       password,
       authUserId,
@@ -122,6 +206,14 @@ export class AdminService {
 
   async updateAccount(user: SupabaseJwtPayload, userId: string, payload: UpdateAdminAccountDto): Promise<AdminAccountRecord> {
     this.assertAdmin(user);
+
+    if (payload.displayName !== undefined) {
+      await this.updateSupabaseAuthUser(userId, { displayName: payload.displayName.trim() });
+    }
+
+    if (payload.accountType !== undefined) {
+      await this.updateSupabaseAuthUser(userId, { accountType: payload.accountType });
+    }
 
     await prisma.profile.update({
       where: { userId },
@@ -159,16 +251,19 @@ export class AdminService {
       });
     }
 
-    const reloadedProfile = await prisma.profile.findUnique({
-      where: { userId },
-      include: { company: true },
-    });
+    const [reloadedProfile, authUsers] = await Promise.all([
+      prisma.profile.findUnique({
+        where: { userId },
+        include: { company: true },
+      }),
+      this.fetchSupabaseAuthUsers(),
+    ]);
 
     if (!reloadedProfile) {
       throw new InternalServerErrorException('Updated profile could not be loaded');
     }
 
-    return reloadedProfile;
+    return this.enrichProfile(reloadedProfile, authUsers.get(userId));
   }
 
   async archiveAccount(user: SupabaseJwtPayload, userId: string, archived: boolean): Promise<AdminAccountRecord> {

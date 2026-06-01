@@ -10,11 +10,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, PlusCircle, Pencil, Archive, RotateCcw, XCircle } from "lucide-react";
 
 type AccountType = "developer" | "company" | "admin";
+type RoleFilter = AccountType | "all";
 
 interface AdminAccount {
   id: string;
   userId: string;
   accountType: AccountType;
+  email?: string | null;
+  displayName?: string | null;
   archivedAt?: string | null;
   githubUsername?: string | null;
   createdAt: string;
@@ -35,6 +38,7 @@ interface AdminAccountsManagerProps {
 
 const EMPTY_FORM = {
   email: "",
+  displayName: "",
   password: "",
   accountType: "company" as AccountType,
   companyName: "",
@@ -49,6 +53,8 @@ export default function AdminAccountsManager({ initialAccounts }: AdminAccountsM
   const [accounts, setAccounts] = useState(initialAccounts);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [searchText, setSearchText] = useState("");
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -66,7 +72,8 @@ export default function AdminAccountsManager({ initialAccounts }: AdminAccountsM
   const loadAccount = (account: AdminAccount) => {
     setSelectedUserId(account.userId);
     setForm({
-      email: "",
+      email: account.email || "",
+      displayName: account.displayName || "",
       password: "",
       accountType: account.accountType,
       companyName: account.company?.name || "",
@@ -86,6 +93,8 @@ export default function AdminAccountsManager({ initialAccounts }: AdminAccountsM
       id: profile.id,
       userId: profile.userId,
       accountType: profile.accountType,
+      email: profile.email ?? payload.email ?? null,
+      displayName: profile.displayName ?? payload.displayName ?? null,
       archivedAt: profile.archivedAt,
       githubUsername: profile.githubUsername,
       createdAt: profile.createdAt,
@@ -119,6 +128,7 @@ export default function AdminAccountsManager({ initialAccounts }: AdminAccountsM
         method: "POST",
         body: JSON.stringify({
           email: form.email,
+          displayName: form.displayName,
           password: form.password || undefined,
           accountType: form.accountType,
           companyName: form.companyName || undefined,
@@ -163,6 +173,7 @@ export default function AdminAccountsManager({ initialAccounts }: AdminAccountsM
       const response = await apiFetchClient(`/admin/accounts/${selectedAccount.userId}`, {
         method: "PATCH",
         body: JSON.stringify({
+          displayName: form.displayName,
           accountType: form.accountType,
           companyName: form.companyName || undefined,
           industry: form.industry || undefined,
@@ -217,6 +228,21 @@ export default function AdminAccountsManager({ initialAccounts }: AdminAccountsM
     }
   };
 
+  const filteredAccounts = useMemo(() => {
+    const normalizedSearch = searchText.trim().toLowerCase();
+
+    return accounts.filter((account) => {
+      const matchesRole = roleFilter === "all" ? true : account.accountType === roleFilter;
+      const searchableText = [account.email, account.displayName, account.company?.name, account.githubUsername, account.userId]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      const matchesSearch = normalizedSearch.length === 0 ? true : searchableText.includes(normalizedSearch);
+
+      return matchesRole && matchesSearch;
+    });
+  }, [accounts, roleFilter, searchText]);
+
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_1.15fr]">
       <Card className="border-border/70">
@@ -228,32 +254,44 @@ export default function AdminAccountsManager({ initialAccounts }: AdminAccountsM
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={selectedAccount ? handleSave : handleCreate}>
-            {!selectedAccount && (
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={form.email} onChange={(e) => setForm((current) => ({ ...current, email: e.target.value }))} placeholder="person@example.com" required />
-              </div>
-            )}
+            <div className="grid gap-4 md:grid-cols-2">
+              {!selectedAccount ? (
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" type="email" value={form.email} onChange={(e) => setForm((current) => ({ ...current, email: e.target.value }))} placeholder="person@example.com" required />
+                </div>
+              ) : (
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" type="email" value={form.email} readOnly aria-readonly="true" className="bg-muted/40 text-muted-foreground" />
+                </div>
+              )}
 
-            {!selectedAccount && (
-              <div className="space-y-2">
-                <Label htmlFor="password">Temporary password</Label>
-                <Input id="password" type="text" value={form.password} onChange={(e) => setForm((current) => ({ ...current, password: e.target.value }))} placeholder="Leave blank to generate one" />
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="displayName">Display name</Label>
+                <Input id="displayName" value={form.displayName} onChange={(e) => setForm((current) => ({ ...current, displayName: e.target.value }))} placeholder="Jordan Smith" required />
               </div>
-            )}
 
-            <div className="space-y-2">
-              <Label htmlFor="accountType">Account type</Label>
-              <select
-                id="accountType"
-                value={form.accountType}
-                onChange={(e) => setForm((current) => ({ ...current, accountType: e.target.value as AccountType }))}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                <option value="developer">Developer</option>
-                <option value="company">Company</option>
-                <option value="admin">Admin</option>
-              </select>
+              {!selectedAccount && (
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="password">Temporary password</Label>
+                  <Input id="password" type="text" value={form.password} onChange={(e) => setForm((current) => ({ ...current, password: e.target.value }))} placeholder="Leave blank to generate one" />
+                </div>
+              )}
+
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="accountType">Account type</Label>
+                <select
+                  id="accountType"
+                  value={form.accountType}
+                  onChange={(e) => setForm((current) => ({ ...current, accountType: e.target.value as AccountType }))}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <option value="developer">Developer</option>
+                  <option value="company">Company</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
             </div>
 
             {form.accountType === "company" && (
@@ -314,11 +352,45 @@ export default function AdminAccountsManager({ initialAccounts }: AdminAccountsM
       </Card>
 
       <div className="space-y-4">
-        {accounts.map((account) => (
+        <Card className="border-border/70">
+          <CardHeader>
+            <CardTitle>Search and filter</CardTitle>
+            <CardDescription>Search by email or display name, then narrow by role.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 md:grid-cols-[1.5fr_1fr]">
+              <div className="space-y-2">
+                <Label htmlFor="accountSearch">Search users</Label>
+                <Input
+                  id="accountSearch"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  placeholder="Search email or display name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="roleFilter">Role</Label>
+                <select
+                  id="roleFilter"
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value as RoleFilter)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <option value="all">All roles</option>
+                  <option value="developer">Developer</option>
+                  <option value="company">Company</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {filteredAccounts.map((account) => (
           <Card key={account.userId} className="border-border/70">
             <CardHeader>
               <CardTitle className="flex items-center justify-between gap-3 text-base">
-                <span>{account.company?.name || account.githubUsername || account.userId}</span>
+                <span>{account.displayName || account.company?.name || account.githubUsername || account.email || account.userId}</span>
                 <div className="flex items-center gap-2">
                   <Badge variant={account.accountType === "company" ? "secondary" : account.accountType === "admin" ? "default" : "outline"}>
                     {account.accountType}
@@ -327,7 +399,7 @@ export default function AdminAccountsManager({ initialAccounts }: AdminAccountsM
                 </div>
               </CardTitle>
               <CardDescription>
-                {account.company?.contactEmail || account.company?.websiteUrl || account.githubUsername || account.userId}
+                {account.email || account.company?.contactEmail || account.company?.websiteUrl || account.githubUsername || account.userId}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
@@ -344,6 +416,14 @@ export default function AdminAccountsManager({ initialAccounts }: AdminAccountsM
             </CardContent>
           </Card>
         ))}
+
+        {filteredAccounts.length === 0 ? (
+          <Card className="border-dashed border-border/70">
+            <CardContent className="py-8 text-sm text-muted-foreground">
+              No users match the current search and role filter.
+            </CardContent>
+          </Card>
+        ) : null}
       </div>
     </div>
   );

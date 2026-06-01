@@ -5,6 +5,9 @@ export class CreateAdminAccountDto {
   @ApiProperty({ example: 'company.admin@example.com' })
   email!: string;
 
+  @ApiProperty({ example: 'Acme Admin' })
+  displayName!: string;
+
   @ApiPropertyOptional({ example: 'TempPass123!' })
   password?: string;
 

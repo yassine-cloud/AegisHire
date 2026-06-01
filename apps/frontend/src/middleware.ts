@@ -11,8 +11,8 @@ const roleRouteMap: Record<string, string[]> = {
 
 const defaultRouteByRole: Record<string, string> = {
   developer: '/profile',
-  company: '/profile',
-  admin: '/profile',
+  company: '/company',
+  admin: '/admin',
 }
 
 export async function middleware(request: NextRequest) {
