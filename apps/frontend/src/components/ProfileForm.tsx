@@ -436,15 +436,6 @@ export default function ProfileForm({ initialData, isNew }: ProfileFormProps) {
             </div>
           )}
 
-        </Button>
-
-   {parseError && (
-  <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">
-    <XCircle className="h-4 w-4 shrink-0" />
-    {parseError}
-  </div>
-)}
-
 <Button
   type="button"
   variant="secondary"

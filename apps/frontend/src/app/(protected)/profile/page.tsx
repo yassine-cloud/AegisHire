@@ -34,50 +34,41 @@ export default async function ProfilePage() {
 
   const accountType = profileData?.accountType || "developer";
 
+  if (accountType === "developer") {
+    // Inject the new shell layout for developers
+    return (
+      <ProfileDashboardShell
+        candidateName={candidateName}
+        isNewProfile={isNewProfile}
+        profileData={{
+          ...profileData,
+          userId: user?.id,
+        }}
+      />
+    );
+  }
+
+  // Fallback for Company/Admin
   return (
     <div className="max-w-3xl mx-auto space-y-8">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">
-            {isNewProfile ? "Complete your profile" : "Account settings"}
+            Account settings
           </h1>
           <p className="mt-2 text-muted-foreground">
-            {isNewProfile
-              ? "Set your display name and keep your profile details up to date."
-              : "Update your display name, change your password, and manage your profile details."}
+            Update your display name, change your password, and manage your profile details.
           </p>
         </div>
-        {accountType === "developer" && (
-        <Link
-          href="/test-gap-report"
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground border border-border rounded-md px-3 py-2 transition-colors hover:bg-muted/30 whitespace-nowrap"
-        >
-          <FlaskConical className="h-4 w-4" />
-          Test Gap Report
-        </Link>
-        )}
       </div>
 
       <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm">
-        {accountType === "developer" ? (
-          <ProfileForm
-            initialData={{
-              displayName: user?.user_metadata?.display_name ?? user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "",
-              email: user?.email ?? "",
-              githubUsername: profileData?.githubUsername,
-              resumeFileUrl: profileData?.resumeFileUrl,
-              skills: profileData?.skills ?? null,
-            }}
-            isNew={isNewProfile}
-          />
-        ) : (
-          <CompanyAdminProfileForm
-            initialData={{
-              displayName: user?.user_metadata?.display_name ?? user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "",
-              email: user?.email ?? "",
-            }}
-          />
-        )}
+        <CompanyAdminProfileForm
+          initialData={{
+            displayName: user?.user_metadata?.display_name ?? user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "",
+            email: user?.email ?? "",
+          }}
+        />
       </div>
     </div>
   );
