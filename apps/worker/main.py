@@ -43,6 +43,22 @@ except Exception:
     from .graph_skill.main import router as graph_skill_router
 
 try:
+    from interviewer.router import router as interviewer_router
+except Exception:
+    try:
+        from .interviewer.router import router as interviewer_router
+    except Exception:
+        interviewer_router = None
+
+try:
+    from assessment.router import router as assessment_router
+except Exception:
+    try:
+        from .assessment.router import router as assessment_router
+    except Exception:
+        assessment_router = None
+
+try:
     from cvParser import CVParser
 except ImportError as e:
     print(f"Error importing CVParser: {e}")
@@ -55,6 +71,10 @@ app = FastAPI(
 )
 app.include_router(github_router)
 app.include_router(graph_skill_router)
+if interviewer_router is not None:
+    app.include_router(interviewer_router)
+if assessment_router is not None:
+    app.include_router(assessment_router)
 
 
 
