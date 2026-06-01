@@ -30,18 +30,8 @@ export async function GET(request: Request) {
           clearTimeout(timeoutId);
 
           if (profileResponse.ok) {
-            const profile = await profileResponse.json()
-            const accountType = profile.accountType || 'developer'
-
-            // Route based on account type
-            const routes: Record<string, string> = {
-              developer: '/profile',
-              company: '/company',
-              admin: '/admin',
-            }
-
-            const redirectPath = routes[accountType] || '/profile'
-            return NextResponse.redirect(`${origin}${redirectPath}`)
+            // Send all verified users to the profile settings page first.
+            return NextResponse.redirect(`${origin}/profile`)
           }
         } catch (err) {
           // If fetch fails or times out, default to profile

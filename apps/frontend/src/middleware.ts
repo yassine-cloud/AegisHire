@@ -5,20 +5,20 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3
 
 const roleRouteMap: Record<string, string[]> = {
   developer: ['/profile'],
-  company: ['/company'],
-  admin: ['/admin'],
+  company: ['/profile', '/company'],
+  admin: ['/profile', '/admin'],
 }
 
 const defaultRouteByRole: Record<string, string> = {
   developer: '/profile',
-  company: '/company',
-  admin: '/admin',
+  company: '/profile',
+  admin: '/profile',
 }
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  if (pathname.startsWith('/auth') || pathname.startsWith('/_next') || pathname === '/') {
+  if (pathname.startsWith('/auth') || pathname.startsWith('/_next')) {
     return NextResponse.next()
   }
 
@@ -44,6 +44,10 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
+    if (pathname === '/') {
+      return NextResponse.next()
+    }
+
     return NextResponse.redirect(new URL('/auth/login', request.url))
   }
 
@@ -52,6 +56,14 @@ export async function middleware(request: NextRequest) {
 
   if (!token) {
     return NextResponse.redirect(new URL('/auth/login', request.url))
+  }
+
+  if (pathname === '/') {
+    if (!user.email_confirmed_at) {
+      return NextResponse.redirect(new URL('/auth/email-unverified', request.url))
+    }
+
+    return NextResponse.redirect(new URL('/profile', request.url))
   }
 
   let accountType = 'developer'

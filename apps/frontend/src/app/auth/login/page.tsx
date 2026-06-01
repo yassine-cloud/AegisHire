@@ -39,8 +39,7 @@ export default function LoginPage() {
       return;
     }
 
-    // On successful login, redirect to a default protected route.
-    // The middleware will handle role-based redirection from there.
+    // On successful login, send every authenticated user to their account settings.
     router.push("/profile");
   };
 
