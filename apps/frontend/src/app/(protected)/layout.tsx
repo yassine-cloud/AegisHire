@@ -74,10 +74,12 @@ export default async function ProtectedLayout({
           
           <nav>
             <div className="flex items-center gap-4">
+              {(accountType === 'developer') && (
               <Link href="/profile" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
                 Profile
               </Link>
-              {(accountType === 'company' || accountType === 'admin') && (
+              )}
+              {(accountType === 'company') && (
                 <Link href="/company" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
                   Company
                 </Link>
