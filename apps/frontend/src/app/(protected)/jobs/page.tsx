@@ -1,9 +1,10 @@
 import { apiFetchServer } from "@/lib/api.server";
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { BriefcaseBusiness, Building2, CalendarDays, MapPin, Search } from "lucide-react";
+import { Search } from "lucide-react";
+import { JobCard } from "@/components/JobCard";
 
 export const metadata = {
   title: "Jobs | AegisHire",
@@ -100,55 +101,7 @@ export default async function JobsPage({
       ) : (
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {filteredJobs.map((job) => (
-            <Card key={job.id} className="border-border/70 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
-              <CardHeader className="space-y-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <CardTitle className="text-xl leading-tight">
-                      <Link href={`/jobs/${job.id}`} className="hover:underline underline-offset-4">
-                        {job.title}
-                      </Link>
-                    </CardTitle>
-                    <CardDescription className="flex items-center gap-2 text-sm">
-                      <Building2 className="h-4 w-4" />
-                      {job.company.name}
-                    </CardDescription>
-                  </div>
-                  {job.salaryRange ? <Badge variant="secondary">{job.salaryRange}</Badge> : null}
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {job.location ? (
-                    <Badge variant="outline" className="gap-1.5">
-                      <MapPin className="h-3.5 w-3.5" />
-                      {job.location}
-                    </Badge>
-                  ) : null}
-                  {job.employmentType ? (
-                    <Badge variant="outline" className="gap-1.5">
-                      <BriefcaseBusiness className="h-3.5 w-3.5" />
-                      {job.employmentType}
-                    </Badge>
-                  ) : null}
-                  <Badge variant="outline" className="gap-1.5">
-                    <CalendarDays className="h-3.5 w-3.5" />
-                    {formatDate(job.createdAt)}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="line-clamp-4 text-sm text-muted-foreground">{job.description}</p>
-                <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                  {job.company.industry ? <Badge variant="secondary">{job.company.industry}</Badge> : null}
-                  {job.company.size ? <Badge variant="secondary">{job.company.size}</Badge> : null}
-                </div>
-              </CardContent>
-              <div className="px-6 pb-6">
-                <Link href={`/jobs/${job.id}`} className="text-sm font-medium text-primary hover:underline">
-                  View job details
-                </Link>
-              </div>
-            </Card>
+            <JobCard key={job.id} job={job} />
           ))}
         </div>
       )}
