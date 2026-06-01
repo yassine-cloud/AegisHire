@@ -44,6 +44,8 @@ class InterviewSession:
         self.mode = payload.mode
         self.default_question_time_seconds = payload.default_question_time_seconds
         self.user_id = payload.user_id
+        self.candidate_id = payload.candidate_id or payload.user_id
+        self.job_offer_id = payload.job_offer_id
 
         self.created_at = time.time()
         self.questions = []

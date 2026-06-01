@@ -55,6 +55,8 @@ interface LiveMessage {
   session_id?: string;
   speaker?: string;
   summary?: string | null;
+  review?: string | null;
+  report_id?: string | null;
   text?: string;
   transcript?: string[];
 }
@@ -66,6 +68,8 @@ interface SubmitAnswerResponse {
   message?: string | null;
   transcript?: string[];
   summary?: string | null;
+  review?: string | null;
+  report_id?: string | null;
 }
 
 interface AssessmentTask {
@@ -84,6 +88,11 @@ interface AssessmentStartResponse {
   provider: string;
   model: string;
   tasks: AssessmentTask[];
+}
+
+interface AssessmentSubmitResponse {
+  status: string;
+  report_id?: string | null;
 }
 
 interface TranscriptEntry {
@@ -154,6 +163,22 @@ function appendTranscriptLine(items: string[], line: string) {
   return [...items, line];
 }
 
+function parseSkillsParam(value: string | null) {
+  if (!value) return null;
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (Array.isArray(parsed)) {
+      return parsed.map((item) => String(item).trim()).filter(Boolean);
+    }
+  } catch {
+    // Fall back to comma-separated values.
+  }
+  return value
+    .split(",")
+    .map((skill) => skill.trim())
+    .filter(Boolean);
+}
+
 export default function InterviewPage() {
   const wsRef = useRef<WebSocket | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -171,14 +196,19 @@ export default function InterviewPage() {
     "Build microservices with React, Node.js, NestJS, PostgreSQL, and Redis."
   );
   const [skillsInput, setSkillsInput] = useState(DEFAULT_SKILLS);
+  const [candidateId, setCandidateId] = useState<string | null>(null);
+  const [jobOfferId, setJobOfferId] = useState<string | null>(null);
+  const [contextLocked, setContextLocked] = useState(false);
   const [mode, setMode] = useState<InterviewMode>("text");
-  const [defaultTime, setDefaultTime] = useState("30");
+  const [defaultTime] = useState("30");
 
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [question, setQuestion] = useState<InterviewQuestion | null>(null);
   const [answer, setAnswer] = useState("");
   const [transcript, setTranscript] = useState<string[]>([]);
   const [summary, setSummary] = useState<string | null>(null);
+  const [review, setReview] = useState<string | null>(null);
+  const [interviewReportId, setInterviewReportId] = useState<string | null>(null);
   const [timer, setTimer] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [voiceError, setVoiceError] = useState<string | null>(null);
@@ -194,6 +224,7 @@ export default function InterviewPage() {
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [assessmentProvider, setAssessmentProvider] = useState<string | null>(null);
   const [assessmentModel, setAssessmentModel] = useState<string | null>(null);
+  const [assessmentReportId, setAssessmentReportId] = useState<string | null>(null);
   const [assessmentTasks, setAssessmentTasks] = useState<AssessmentTask[]>([]);
   const [assessmentAnswers, setAssessmentAnswers] = useState<Record<string, string>>({});
   const [assessmentStarted, setAssessmentStarted] = useState(false);
@@ -222,6 +253,22 @@ export default function InterviewPage() {
   const normalizedApiBase = apiBase.replace(/\/+$/, "");
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const nextApiBase = params.get("workerUrl") || params.get("apiBase");
+    const nextJobTitle = params.get("jobTitle");
+    const nextJobDescription = params.get("jobDescription");
+    const nextSkills = parseSkillsParam(params.get("requiredSkills") || params.get("skills"));
+    const nextCandidateId = params.get("candidateId");
+    const nextJobOfferId = params.get("jobOfferId") || params.get("roleId");
+
+    if (nextApiBase) setApiBase(nextApiBase);
+    if (nextJobTitle) setJobTitle(nextJobTitle);
+    if (nextJobDescription) setJobDescription(nextJobDescription);
+    if (nextSkills?.length) setSkillsInput(nextSkills.join(", "));
+    if (nextCandidateId) setCandidateId(nextCandidateId);
+    if (nextJobOfferId) setJobOfferId(nextJobOfferId);
+    setContextLocked(Boolean(nextJobTitle || nextJobDescription || nextSkills?.length));
+
     const splashTimer = window.setTimeout(() => setShowSplash(false), 1800);
 
     return () => {
@@ -281,6 +328,7 @@ export default function InterviewPage() {
     setAssessmentId(null);
     setAssessmentProvider(null);
     setAssessmentModel(null);
+    setAssessmentReportId(null);
     setAssessmentTasks([]);
     setAssessmentAnswers({});
     setAssessmentStarted(false);
@@ -445,6 +493,8 @@ export default function InterviewPage() {
     setVoiceError(null);
     setStatus(null);
     setSummary(null);
+    setReview(null);
+    setInterviewReportId(null);
     setInterviewPassed(false);
     resetAssessment();
     if (!sessionId) {
@@ -463,6 +513,8 @@ export default function InterviewPage() {
           job_title: jobTitle.trim(),
           job_description: jobDescription.trim(),
           required_skills: skills,
+          candidate_id: candidateId,
+          job_offer_id: jobOfferId,
           session_id: sessionId,
         })
       );
@@ -508,6 +560,8 @@ export default function InterviewPage() {
       if (message.type === "stopped") {
         setTranscript(message.transcript || []);
         setSummary(message.summary || null);
+        setReview(message.review || null);
+        setInterviewReportId(message.report_id || null);
         if (message.end_reason === "NOT_SERIOUS") {
           setReportSubmitted(false);
           setNotSeriousNoticeOpen(true);
@@ -573,6 +627,8 @@ export default function InterviewPage() {
     setVoiceError(null);
     setStatus(null);
     setSummary(null);
+    setReview(null);
+    setInterviewReportId(null);
     setTranscript([]);
     setQuestion(null);
     setAnswer("");
@@ -588,6 +644,8 @@ export default function InterviewPage() {
           job_description: jobDescription.trim(),
           required_skills: skills,
           mode,
+          candidate_id: candidateId,
+          job_offer_id: jobOfferId,
           default_question_time_seconds:
             Number.parseInt(defaultTime, 10) || 30,
         }),
@@ -661,6 +719,12 @@ export default function InterviewPage() {
       if (data.summary !== undefined) {
         setSummary(data.summary);
       }
+      if (data.review !== undefined) {
+        setReview(data.review);
+      }
+      if (data.report_id !== undefined) {
+        setInterviewReportId(data.report_id);
+      }
 
       if (data.end_reason) {
         if (data.end_reason === "NOT_SERIOUS") {
@@ -712,9 +776,13 @@ export default function InterviewPage() {
       const data = (await res.json()) as {
         transcript?: string[];
         summary?: string | null;
+        review?: string | null;
+        report_id?: string | null;
       };
       setTranscript(data.transcript || []);
       setSummary(data.summary || null);
+      setReview(data.review || null);
+      setInterviewReportId(data.report_id || null);
       setSessionId(null);
       setQuestion(null);
       setAnswer("");
@@ -741,6 +809,8 @@ export default function InterviewPage() {
           job_description: jobDescription.trim(),
           required_skills: skills,
           interview_transcript: transcript,
+          candidate_id: candidateId,
+          job_offer_id: jobOfferId,
         }),
       });
 
@@ -750,6 +820,7 @@ export default function InterviewPage() {
       setAssessmentId(data.assessment_id);
       setAssessmentProvider(data.provider);
       setAssessmentModel(data.model);
+      setAssessmentReportId(null);
       setAssessmentTasks(data.tasks);
       setAssessmentAnswers(
         Object.fromEntries(data.tasks.map((task) => [task.id, ""]))
@@ -796,9 +867,40 @@ export default function InterviewPage() {
     addAssessmentWarning("Pasting is blocked during the assessment.");
   }
 
-  function submitAssessment() {
-    setAssessmentSubmitted(true);
-    setStatus("Problem-solving test submitted for review");
+  async function submitAssessment() {
+    if (!assessmentId || !candidateId || !jobOfferId) {
+      addAssessmentWarning("Cannot save the test report without candidate and job offer ids.");
+      return;
+    }
+
+    setAssessmentLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${normalizedApiBase}/assessment/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          assessment_id: assessmentId,
+          candidate_id: candidateId,
+          job_offer_id: jobOfferId,
+          job_title: jobTitle.trim(),
+          tasks: assessmentTasks,
+          answers: assessmentAnswers,
+          cheating_flags: assessmentWarnings,
+        }),
+      });
+
+      if (!res.ok) throw new Error(await readApiError(res));
+
+      const data = (await res.json()) as AssessmentSubmitResponse;
+      setAssessmentReportId(data.report_id || null);
+      setAssessmentSubmitted(true);
+      setStatus("Problem-solving test submitted for review");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to submit assessment.");
+    } finally {
+      setAssessmentLoading(false);
+    }
   }
 
   return (
@@ -997,57 +1099,79 @@ export default function InterviewPage() {
           <section className="space-y-5">
             <Card>
               <CardHeader>
-                  <CardTitle>Request Payload</CardTitle>
+                  <CardTitle>Interview Setup</CardTitle>
                 <CardDescription>
-                  POST {normalizedApiBase || DEFAULT_API_BASE}/interview/start
+                  Candidate chooses the mode; job context is supplied by the parent module.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="api-base">Worker URL</Label>
-                  <Input
-                    id="api-base"
-                    value={apiBase}
-                    onChange={(event) => setApiBase(event.target.value)}
-                  />
-                </div>
+                {!contextLocked && (
+                  <>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="api-base">Worker URL</Label>
+                      <Input
+                        id="api-base"
+                        value={apiBase}
+                        onChange={(event) => setApiBase(event.target.value)}
+                      />
+                    </div>
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="job-title">Job title</Label>
-                  <Input
-                    id="job-title"
-                    value={jobTitle}
-                    onChange={(event) => setJobTitle(event.target.value)}
-                  />
-                </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="job-title">Job title</Label>
+                      <Input
+                        id="job-title"
+                        value={jobTitle}
+                        onChange={(event) => setJobTitle(event.target.value)}
+                      />
+                    </div>
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="job-description">Job description</Label>
-                  <textarea
-                    id="job-description"
-                    value={jobDescription}
-                    onChange={(event) => setJobDescription(event.target.value)}
-                    className="min-h-28 w-full resize-y rounded-md border border-input bg-transparent px-2.5 py-2 text-sm shadow-xs outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                  />
-                </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="job-description">Job description</Label>
+                      <textarea
+                        id="job-description"
+                        value={jobDescription}
+                        onChange={(event) => setJobDescription(event.target.value)}
+                        className="min-h-28 w-full resize-y rounded-md border border-input bg-transparent px-2.5 py-2 text-sm shadow-xs outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                      />
+                    </div>
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="skills">Required skills</Label>
-                  <Input
-                    id="skills"
-                    value={skillsInput}
-                    onChange={(event) => setSkillsInput(event.target.value)}
-                  />
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {skills.map((skill) => (
-                      <Badge key={skill} variant="outline">
-                        {skill}
-                      </Badge>
-                    ))}
+                    <div className="space-y-1.5">
+                      <Label htmlFor="skills">Required skills</Label>
+                      <Input
+                        id="skills"
+                        value={skillsInput}
+                        onChange={(event) => setSkillsInput(event.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {contextLocked && (
+                  <div className="space-y-3 rounded-md border bg-background p-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Job offer</p>
+                      <p className="mt-1 font-medium">{jobTitle}</p>
+                    </div>
+                    <p className="line-clamp-4 text-sm leading-6 text-muted-foreground">
+                      {jobDescription}
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {skills.map((skill) => (
+                        <Badge key={skill} variant="outline">
+                          {skill}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
-                <div className="grid grid-cols-2 gap-3">
+                {!candidateId || !jobOfferId ? (
+                  <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-700">
+                    Missing candidate id or job offer id. Reports will not be saved until the parent module passes both values.
+                  </div>
+                ) : null}
+
+                <div className="grid gap-3">
                   <div className="space-y-1.5">
                     <Label htmlFor="mode">Mode</Label>
                     <select
@@ -1061,16 +1185,6 @@ export default function InterviewPage() {
                       <option value="text">Text</option>
                       <option value="live">Live</option>
                     </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="default-time">Default time</Label>
-                    <Input
-                      id="default-time"
-                      min={1}
-                      type="number"
-                      value={defaultTime}
-                      onChange={(event) => setDefaultTime(event.target.value)}
-                    />
                   </div>
                 </div>
 
@@ -1167,6 +1281,11 @@ export default function InterviewPage() {
                 {assessmentId && (
                   <p className="break-all font-mono text-xs text-muted-foreground">
                     {assessmentId}
+                  </p>
+                )}
+                {assessmentReportId && (
+                  <p className="break-all font-mono text-xs text-muted-foreground">
+                    Report: {assessmentReportId}
                   </p>
                 )}
                 <Button
@@ -1450,11 +1569,17 @@ export default function InterviewPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Summary</CardTitle>
+                  <CardTitle>Summary & Review</CardTitle>
                 </CardHeader>
                 <CardContent>
+                  {interviewReportId && (
+                    <p className="mb-3 break-all font-mono text-xs text-muted-foreground">
+                      Report: {interviewReportId}
+                    </p>
+                  )}
                   <pre className="min-h-56 whitespace-pre-wrap rounded-md bg-background p-4 text-sm leading-6 text-muted-foreground ring-1 ring-border">
                     {summary || "No summary yet"}
+                    {review ? `\n\nReview:\n${review}` : ""}
                   </pre>
                 </CardContent>
               </Card>

@@ -11,6 +11,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
 from config import get_settings
+from reporting import save_phase_report
 
 router = APIRouter(prefix="/assessment", tags=["assessment"])
 logger = logging.getLogger("worker.assessment")
@@ -25,6 +26,8 @@ class AssessmentStartRequest(BaseModel):
     job_description: str = Field(min_length=1)
     required_skills: list[str] = Field(default_factory=list)
     interview_transcript: list[str] = Field(default_factory=list)
+    candidate_id: str | None = None
+    job_offer_id: str | None = None
 
 
 class AssessmentTask(BaseModel):
@@ -47,6 +50,25 @@ class AssessmentStartResponse(BaseModel):
     provider: str
     model: str
     tasks: list[AssessmentTask]
+
+
+class AssessmentSubmitRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    candidate_id: str
+    job_offer_id: str
+    assessment_id: str
+    job_title: str
+    tasks: list[AssessmentTask]
+    answers: dict[str, str]
+    cheating_flags: list[str] = Field(default_factory=list)
+
+
+class AssessmentSubmitResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    status: str
+    report_id: str | None = None
 
 
 def _get_groq_key() -> str | None:
@@ -276,3 +298,20 @@ Rules:
     except Exception as exc:
         logger.error("[ASSESSMENT] Assessment generation failed before Groq call: %s", exc, exc_info=True)
         raise HTTPException(status_code=502, detail=f"Assessment generation failed: {exc}") from exc
+
+
+@router.post("/submit", response_model=AssessmentSubmitResponse)
+async def submit_assessment(payload: AssessmentSubmitRequest):
+    report_id = save_phase_report(
+        candidate_id=payload.candidate_id,
+        job_offer_id=payload.job_offer_id,
+        phase="problem_solving",
+        report={
+            "assessment_id": payload.assessment_id,
+            "job_title": payload.job_title,
+            "tasks": [task.model_dump() for task in payload.tasks],
+            "answers": payload.answers,
+            "cheating_flags": payload.cheating_flags,
+        },
+    )
+    return AssessmentSubmitResponse(status="saved", report_id=report_id)

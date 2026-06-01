@@ -21,6 +21,7 @@ from .schemas import (
     StopInterviewResponse,
 )
 from .service import service
+from reporting import save_phase_report
 
 from config import get_settings
 
@@ -159,12 +160,24 @@ def _end_text_interview(session_id: str, end_reason: str, message: str) -> Submi
     service.append_transcript(session_id, f"Interviewer: {message}")
     stopped_session = service.stop_session(session_id)
     final_transcript = stopped_session.transcript if stopped_session else []
+    summary = _generate_summary_with_llm(final_transcript)
+    review = _generate_review_with_llm(final_transcript)
+    report_id = None
+    if stopped_session:
+        report_id = _save_interview_report(
+            stopped_session,
+            end_reason=end_reason,
+            summary=summary,
+            review=review,
+        )
     return SubmitAnswerResponse(
         status="ended",
         end_reason=end_reason,
         message=message,
         transcript=final_transcript,
-        summary=_generate_summary_with_llm(final_transcript),
+        summary=summary,
+        review=review,
+        report_id=report_id,
     )
 
 
@@ -235,12 +248,24 @@ def _fallback_text_turn(session_id: str, message: str | None = None) -> SubmitAn
     if q is None:
         stopped_session = service.stop_session(session_id)
         final_transcript = stopped_session.transcript if stopped_session else transcript
+        summary = _generate_summary_with_llm(final_transcript)
+        review = _generate_review_with_llm(final_transcript)
+        report_id = None
+        if stopped_session:
+            report_id = _save_interview_report(
+                stopped_session,
+                end_reason="FINISHED",
+                summary=summary,
+                review=review,
+            )
         return SubmitAnswerResponse(
             status="ended",
             end_reason="FINISHED",
             message=message or "No more questions.",
             transcript=final_transcript,
-            summary=_generate_summary_with_llm(final_transcript),
+            summary=summary,
+            review=review,
+            report_id=report_id,
         )
     return SubmitAnswerResponse(
         status="ok",
@@ -371,6 +396,8 @@ async def live_interview(websocket: WebSocket):
                     required_skills=start_payload.get("required_skills") or [],
                     mode="live",
                     user_id=start_payload.get("user_id"),
+                    candidate_id=start_payload.get("candidate_id"),
+                    job_offer_id=start_payload.get("job_offer_id"),
                 )
             )
         else:
@@ -545,6 +572,13 @@ async def live_interview(websocket: WebSocket):
         stopped_session = service.stop_session(live_session.id)
         if stopped_session:
             summary = _generate_summary_with_llm(stopped_session.transcript)
+            review = _generate_review_with_llm(stopped_session.transcript)
+            report_id = _save_interview_report(
+                stopped_session,
+                end_reason=end_interview_reason,
+                summary=summary,
+                review=review,
+            )
             await websocket.send_json(
                 {
                     "type": "stopped",
@@ -552,6 +586,8 @@ async def live_interview(websocket: WebSocket):
                     "end_reason": end_interview_reason,
                     "transcript": stopped_session.transcript,
                     "summary": summary,
+                    "review": review,
+                    "report_id": report_id,
                 }
             )
 
@@ -652,6 +688,54 @@ def _generate_summary_with_llm(transcript: list[str]) -> str:
     )
 
 
+def _generate_review_with_llm(transcript: list[str]) -> str:
+    settings = get_settings()
+    try:
+        if settings.llm_provider == "gemini":
+            try:
+                from google import genai
+
+                client = genai.Client()
+                prompt = (
+                    "You are reviewing a technical interview for hiring signal. Produce an analytical review with: "
+                    "overall recommendation, communication quality, technical depth, practical reasoning, "
+                    "risk signals, and concrete evidence from the transcript. Keep it concise and structured.\n\n"
+                    + "\n".join(transcript)
+                )
+                resp = client.models.generate_content(model=settings.llm_model_name, contents=prompt)
+                return getattr(resp, "text", None) or ""
+            except Exception as exc:
+                logger.warning("[REVIEW] LLM review failed: %s", exc)
+    except Exception:
+        pass
+    if not transcript:
+        return "No transcript available for review."
+    return "LLM review was not available. Manual review required using the transcript evidence."
+
+
+def _save_interview_report(session, *, end_reason: str | None, summary: str, review: str) -> str | None:
+    try:
+        return save_phase_report(
+            candidate_id=getattr(session, "candidate_id", None),
+            job_offer_id=getattr(session, "job_offer_id", None),
+            phase="interview",
+            report={
+                "session_id": session.id,
+                "mode": session.mode,
+                "job_title": session.job_title,
+                "job_description": session.job_description,
+                "required_skills": session.required_skills,
+                "end_reason": end_reason or "STOPPED",
+                "summary": summary,
+                "review": review,
+                "transcript": session.transcript,
+            },
+        )
+    except Exception as exc:
+        logger.error("[REPORTING] Failed to save interview report: %s", exc, exc_info=True)
+        return None
+
+
 @router.post("/{session_id}/stop", response_model=StopInterviewResponse)
 async def stop_session(session_id: str, background_tasks: BackgroundTasks):
     sess = service.stop_session(session_id)
@@ -662,5 +746,18 @@ async def stop_session(session_id: str, background_tasks: BackgroundTasks):
 
     # Generate summary synchronously (fast path) — if heavy, move to background
     summary = _generate_summary_with_llm(transcript)
+    review = _generate_review_with_llm(transcript)
+    report_id = _save_interview_report(
+        sess,
+        end_reason="STOPPED",
+        summary=summary,
+        review=review,
+    )
 
-    return StopInterviewResponse(session_id=session_id, transcript=transcript, summary=summary)
+    return StopInterviewResponse(
+        session_id=session_id,
+        transcript=transcript,
+        summary=summary,
+        review=review,
+        report_id=report_id,
+    )

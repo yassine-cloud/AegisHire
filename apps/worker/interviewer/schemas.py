@@ -13,6 +13,8 @@ class StartInterviewRequest(BaseModel):
     mode: Literal["text", "live"] = "text"
     default_question_time_seconds: int = 30
     user_id: Optional[str] = None
+    candidate_id: Optional[str] = None
+    job_offer_id: Optional[str] = None
 
 
 class StartInterviewResponse(BaseModel):
@@ -51,6 +53,8 @@ class SubmitAnswerResponse(BaseModel):
     message: Optional[str] = None
     transcript: List[str] = Field(default_factory=list)
     summary: Optional[str] = None
+    review: Optional[str] = None
+    report_id: Optional[str] = None
 
 
 class StopInterviewResponse(BaseModel):
@@ -59,3 +63,5 @@ class StopInterviewResponse(BaseModel):
     session_id: str
     transcript: List[str]
     summary: Optional[str]
+    review: Optional[str] = None
+    report_id: Optional[str] = None
