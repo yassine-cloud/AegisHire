@@ -126,6 +126,7 @@ model RoleMatch {
   compatibilityScore Int?     @map("compatibility_score") @db.SmallInt
   matchedSkills      Json?    @map("matched_skills")
   missingSkills      Json?    @map("missing_skills")
+  explanation        Json?    @map("explanation")
   computedAt         DateTime @default(now()) @map("computed_at")
 
   role Role @relation(fields: [roleId], references: [id])

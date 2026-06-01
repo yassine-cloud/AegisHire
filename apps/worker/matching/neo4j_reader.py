@@ -42,7 +42,7 @@ class Neo4jReader:
         """
 
         query = """
-        MATCH (c:Candidate {id: $candidate_id})-[r:HAS_SKILL]->(s:Skill {normalized_name: $skill_name})
+        MATCH (u:User {id: $candidate_id})-[r:PROFICIENT_IN]->(s:Skill {name: $skill_name})
         RETURN r.confidence AS confidence
         LIMIT 1
         """
@@ -65,6 +65,36 @@ class Neo4jReader:
             return None
 
         return float(confidence)
+
+    def get_candidate_skills(self, candidate_id: str) -> dict[str, float]:
+        """Fetch all skills and their confidences for a candidate.
+
+        Args:
+            candidate_id: Candidate UUID string.
+
+        Returns:
+            Dictionary mapping normalized_name to confidence.
+
+        Raises:
+            Neo4jConnectionError: If the query fails.
+        """
+        query = """
+        MATCH (u:User {id: $candidate_id})-[r:PROFICIENT_IN]->(s:Skill)
+        RETURN s.name AS skill_name, r.confidence AS confidence
+        """
+
+        try:
+            with self._driver.session() as session:
+                records = session.run(query, candidate_id=candidate_id)
+                skills = {}
+                for record in records:
+                    skill_name = record.get("skill_name")
+                    confidence = record.get("confidence")
+                    if skill_name and confidence is not None:
+                        skills[skill_name.lower()] = float(confidence)
+                return skills
+        except Neo4jError as exc:
+            raise Neo4jConnectionError("Failed to query candidate skills from Neo4j") from exc
 
 
 def map_confidence_to_level(confidence: float | None) -> str:

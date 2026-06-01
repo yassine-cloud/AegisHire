@@ -147,6 +147,142 @@ export class RolesService {
     return response;
   }
 
+  /**
+   * Compare candidate with a role by calling the worker and upserting the RoleMatch.
+   */
+  async compareRole(candidateId: string, roleSlug: string): Promise<{ message: string; compatibilityScore: number }> {
+    const role = await prisma.role.findUnique({
+      where: { slug: roleSlug },
+      select: { id: true, slug: true, requiredSkills: true, preferredSkills: true },
+    });
+
+    if (!role) {
+      throw new NotFoundException(
+        this.errorEnvelope(HttpStatus.NOT_FOUND, 'ROLE_NOT_FOUND', 'Role not found.')
+      );
+    }
+
+    const workerBaseUrl = process.env.WORKER_BASE_URL;
+    if (!workerBaseUrl) {
+      throw new ServiceUnavailableException(
+        this.errorEnvelope(HttpStatus.SERVICE_UNAVAILABLE, 'WORKER_UNAVAILABLE', 'Worker base URL is missing.')
+      );
+    }
+
+    try {
+      const workerResponse = await firstValueFrom(
+        this.httpService.post<{ compatibility_score: number; matched_skills: any[]; missing_skills: any[] }>(
+          `${workerBaseUrl}/worker/compare-role`,
+          {
+            candidate_id: candidateId,
+            role_id: role.slug,
+            required_skills: role.requiredSkills || [],
+            preferred_skills: role.preferredSkills || [],
+          },
+          { timeout: 30000 }
+        )
+      );
+
+      const { compatibility_score, matched_skills, missing_skills } = workerResponse.data;
+
+      await prisma.roleMatch.upsert({
+        where: { candidateId_roleId: { candidateId, roleId: role.id } },
+        create: {
+          candidateId,
+          roleId: role.id,
+          compatibilityScore: compatibility_score,
+          matchedSkills: matched_skills as any,
+          missingSkills: missing_skills as any,
+        },
+        update: {
+          compatibilityScore: compatibility_score,
+          matchedSkills: matched_skills as any,
+          missingSkills: missing_skills as any,
+          computedAt: new Date(),
+        },
+      });
+
+      return {
+        message: 'Role comparison completed successfully.',
+        compatibilityScore: compatibility_score,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to compare role: ${this.stringifyError(error)}`);
+      throw new ServiceUnavailableException(
+        this.errorEnvelope(HttpStatus.SERVICE_UNAVAILABLE, 'WORKER_UNAVAILABLE', 'Failed to compare role.')
+      );
+    }
+  }
+
+  /**
+   * Explain a match score for a candidate and role.
+   */
+  async getMatchExplanation(candidateId: string, roleSlug: string): Promise<any> {
+    const role = await prisma.role.findUnique({
+      where: { slug: roleSlug },
+      select: { id: true, title: true },
+    });
+
+    if (!role) {
+      throw new NotFoundException(
+        this.errorEnvelope(HttpStatus.NOT_FOUND, 'ROLE_NOT_FOUND', 'Role not found.')
+      );
+    }
+
+    const roleMatch = await prisma.roleMatch.findUnique({
+      where: { candidateId_roleId: { candidateId, roleId: role.id } },
+      select: { compatibilityScore: true, matchedSkills: true, missingSkills: true, explanation: true },
+    });
+
+    if (!roleMatch) {
+      throw new NotFoundException(
+        this.errorEnvelope(HttpStatus.NOT_FOUND, 'ROLE_MATCH_NOT_FOUND', 'Role match not found. Please compare the role first.')
+      );
+    }
+
+    // Return cached explanation if it exists
+    if (roleMatch.explanation) {
+      return roleMatch.explanation;
+    }
+
+    const workerBaseUrl = process.env.WORKER_BASE_URL;
+    if (!workerBaseUrl) {
+      throw new ServiceUnavailableException(
+        this.errorEnvelope(HttpStatus.SERVICE_UNAVAILABLE, 'WORKER_UNAVAILABLE', 'Worker base URL is missing.')
+      );
+    }
+
+    try {
+      const workerResponse = await firstValueFrom(
+        this.httpService.post<any>(
+          `${workerBaseUrl}/worker/explain-match-score`,
+          {
+            role_title: role.title,
+            compatibility_score: roleMatch.compatibilityScore ?? 0,
+            matched_skills: roleMatch.matchedSkills ?? [],
+            missing_skills: roleMatch.missingSkills ?? [],
+          },
+          { timeout: 30000 }
+        )
+      );
+
+      const explanation = workerResponse.data;
+
+      // Cache the explanation in DB
+      await prisma.roleMatch.update({
+        where: { candidateId_roleId: { candidateId, roleId: role.id } },
+        data: { explanation: explanation as any },
+      });
+
+      return explanation;
+    } catch (error) {
+      this.logger.error(`Failed to explain match score: ${this.stringifyError(error)}`);
+      throw new ServiceUnavailableException(
+        this.errorEnvelope(HttpStatus.SERVICE_UNAVAILABLE, 'WORKER_UNAVAILABLE', 'Failed to generate match score explanation.')
+      );
+    }
+  }
+
   private buildCacheKey(candidateId: string, roleSlug: string): string {
     return `gap_report:${candidateId}:${roleSlug}`;
   }

@@ -14,7 +14,12 @@ from pathlib import Path
 
 from config import get_settings
 from matching.gap_report_agent import GapReportGenerationError, generate_gap_report
-from matching.schemas import GapReportResult, GenerateReportRequest
+from matching.comparison_agent import compare_candidate_to_role, ComparisonResult
+from matching.explanation_agent import generate_match_explanation, ExplanationResult, MatchScoreExplanationError
+from matching.schemas import (
+    GapReportResult, GenerateReportRequest, 
+    CompareRoleRequest, ExplainMatchScoreRequest
+)
 
 # Configure logging
 logging.basicConfig(
@@ -278,6 +283,57 @@ async def generate_report(payload: GenerateReportRequest) -> GapReportResult:
         ) from exc
     except Exception as exc:
         logger.error(f"Unexpected error during gap report generation: {exc}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Unexpected error: {str(exc)}"
+        ) from exc
+
+
+@app.post("/worker/compare-role", response_model=ComparisonResult)
+async def compare_role(payload: CompareRoleRequest) -> ComparisonResult:
+    """Compare a candidate's skill graph against a role's requirements."""
+    logger.info(f"Received compare role request: candidate_id={payload.candidate_id}, role_id={payload.role_id}")
+    
+    try:
+        result = await run_in_threadpool(
+            compare_candidate_to_role,
+            payload.candidate_id,
+            payload.required_skills,
+            payload.preferred_skills,
+        )
+        logger.info(f"Successfully generated comparison: score={result.compatibility_score}")
+        return result
+    except Exception as exc:
+        logger.error(f"Unexpected error during comparison: {exc}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Unexpected error: {str(exc)}"
+        ) from exc
+
+
+@app.post("/worker/explain-match-score", response_model=ExplanationResult)
+async def explain_match_score(payload: ExplainMatchScoreRequest) -> ExplanationResult:
+    """Explain a match score given the matched and missing skills."""
+    logger.info(f"Received explain match score request: role={payload.role_title}, score={payload.compatibility_score}")
+    
+    try:
+        result = await run_in_threadpool(
+            generate_match_explanation,
+            payload.role_title,
+            payload.compatibility_score,
+            payload.matched_skills,
+            payload.missing_skills,
+        )
+        logger.info(f"Successfully generated explanation")
+        return result
+    except MatchScoreExplanationError as exc:
+        logger.error(f"Match score explanation failed: {exc}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Match score explanation failed: {str(exc)}"
+        ) from exc
+    except Exception as exc:
+        logger.error(f"Unexpected error during explanation generation: {exc}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail=f"Unexpected error: {str(exc)}"

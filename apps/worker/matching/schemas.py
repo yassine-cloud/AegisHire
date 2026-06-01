@@ -44,3 +44,26 @@ class MissingSkill(BaseModel):
 
     skill: str = Field(min_length=1)
     importance: Literal["high", "medium", "low"]
+
+
+class CompareRoleRequest(BaseModel):
+    """Input payload for candidate-role comparison."""
+
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    candidate_id: str = Field(min_length=1)
+    role_id: str = Field(min_length=1)
+    required_skills: list[Any] = Field(default_factory=list)
+    preferred_skills: list[Any] = Field(default_factory=list)
+
+
+class ExplainMatchScoreRequest(BaseModel):
+    """Input payload for generating match score explanation."""
+
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    role_title: str = Field(min_length=1)
+    compatibility_score: int
+    matched_skills: list[Any] = Field(default_factory=list)
+    missing_skills: list[Any] = Field(default_factory=list)
+

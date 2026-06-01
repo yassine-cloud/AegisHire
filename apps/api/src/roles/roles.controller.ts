@@ -61,4 +61,40 @@ export class RolesController {
   ): Promise<GapReportResponseDto> {
     return this.rolesService.getGapReport(user.id, roleId);
   }
+
+  /**
+   * Compare candidate with role requirements using Neo4j graph.
+   */
+  @Post(':id/compare')
+  @UseGuards(SupabaseAuthGuard)
+  @ApiOperation({ summary: 'Compare candidate with a role' })
+  @ApiParam({
+    name: 'id',
+    description: 'Role slug',
+  })
+  @ApiResponse({ status: 200, description: 'Role comparison completed' })
+  async compareRole(
+    @CurrentUser() user: SupabaseJwtPayload,
+    @Param('id') roleId: string,
+  ): Promise<{ message: string; compatibilityScore: number }> {
+    return this.rolesService.compareRole(user.id, roleId);
+  }
+
+  /**
+   * Get match score explanation.
+   */
+  @Get(':id/match-explanation')
+  @UseGuards(SupabaseAuthGuard)
+  @ApiOperation({ summary: 'Get AI explanation of the match score' })
+  @ApiParam({
+    name: 'id',
+    description: 'Role slug',
+  })
+  @ApiResponse({ status: 200, description: 'Explanation details' })
+  async getMatchExplanation(
+    @CurrentUser() user: SupabaseJwtPayload,
+    @Param('id') roleId: string,
+  ): Promise<any> {
+    return this.rolesService.getMatchExplanation(user.id, roleId);
+  }
 }
