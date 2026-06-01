@@ -10,6 +10,7 @@ import { RedisModule } from './shared/redis/redis.module';
 import { GithubAnalysisModule } from './github-analysis/github-analysis.module';
 import { CompaniesModule } from './companies/companies.module';
 import { AdminModule } from './admin/admin.module';
+import { GraphSkillModule } from './graph-skill/graph-skill.module';
 
 @Module({
   imports: [
@@ -23,10 +24,10 @@ import { AdminModule } from './admin/admin.module';
     CompaniesModule,
     AdminModule,
     RolesModule,
-    GithubAnalysisModule
+    GithubAnalysisModule,
+    GraphSkillModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-
 export class AppModule {}

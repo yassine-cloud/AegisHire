@@ -1,4 +1,8 @@
-import { BadRequestException, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import {
+  BadRequestException,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AxiosError } from 'axios';
@@ -25,8 +29,14 @@ type PrismaMock = {
   gapReport: { upsert: jest.Mock };
 };
 
-const workerFixturePath = path.join(__dirname, '__fixtures__', 'gap-report-worker-response.json');
-const workerFixture = JSON.parse(fs.readFileSync(workerFixturePath, 'utf-8')) as {
+const workerFixturePath = path.join(
+  __dirname,
+  '__fixtures__',
+  'gap-report-worker-response.json',
+);
+const workerFixture = JSON.parse(
+  fs.readFileSync(workerFixturePath, 'utf-8'),
+) as {
   gaps: Array<{
     skill: string;
     importance: 'high' | 'medium' | 'low';
@@ -73,9 +83,16 @@ describe('RolesService', () => {
     prismaMock = prisma as unknown as PrismaMock;
 
     jest.clearAllMocks();
-    prismaMock.role.findUnique.mockResolvedValue({ id: 10, slug: 'senior-backend-engineer' });
-    prismaMock.roleMatch.findUnique.mockResolvedValue({ compatibilityScore: 67 });
-    prismaMock.profile.findUnique.mockResolvedValue({ graphBuiltAt: new Date('2026-04-01T00:00:00.000Z') });
+    prismaMock.role.findUnique.mockResolvedValue({
+      id: 10,
+      slug: 'senior-backend-engineer',
+    });
+    prismaMock.roleMatch.findUnique.mockResolvedValue({
+      compatibilityScore: 67,
+    });
+    prismaMock.profile.findUnique.mockResolvedValue({
+      graphBuiltAt: new Date('2026-04-01T00:00:00.000Z'),
+    });
     prismaMock.gapReport.upsert.mockResolvedValue({});
   });
 
@@ -83,7 +100,10 @@ describe('RolesService', () => {
     redisServiceMock.get.mockResolvedValue(null);
     httpServiceMock.post.mockReturnValue(of({ data: workerFixture }));
 
-    const result = await service.getGapReport('candidate-1', 'senior-backend-engineer');
+    const result = await service.getGapReport(
+      'candidate-1',
+      'senior-backend-engineer',
+    );
 
     expect(result.role_id).toBe('senior-backend-engineer');
     expect(result.compatibility_score).toBe(67);
@@ -99,7 +119,10 @@ describe('RolesService', () => {
   it('returns cache hit and does not call worker', async () => {
     redisServiceMock.get.mockResolvedValue(JSON.stringify(workerFixture));
 
-    const result = await service.getGapReport('candidate-1', 'senior-backend-engineer');
+    const result = await service.getGapReport(
+      'candidate-1',
+      'senior-backend-engineer',
+    );
 
     expect(result.gaps).toHaveLength(1);
     expect(httpServiceMock.post).not.toHaveBeenCalled();
@@ -107,13 +130,17 @@ describe('RolesService', () => {
   });
 
   it('throws NO_GAPS_ABOVE_THRESHOLD when score is >= 70', async () => {
-    prismaMock.roleMatch.findUnique.mockResolvedValue({ compatibilityScore: 75 });
+    prismaMock.roleMatch.findUnique.mockResolvedValue({
+      compatibilityScore: 75,
+    });
 
-    await expect(service.getGapReport('candidate-1', 'senior-backend-engineer')).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(
+      service.getGapReport('candidate-1', 'senior-backend-engineer'),
+    ).rejects.toBeInstanceOf(BadRequestException);
 
-    await expect(service.getGapReport('candidate-1', 'senior-backend-engineer')).rejects.toMatchObject({
+    await expect(
+      service.getGapReport('candidate-1', 'senior-backend-engineer'),
+    ).rejects.toMatchObject({
       response: expect.objectContaining({ error: 'NO_GAPS_ABOVE_THRESHOLD' }),
     });
 
@@ -123,9 +150,9 @@ describe('RolesService', () => {
   it('throws ROLE_NOT_FOUND when role match does not exist', async () => {
     prismaMock.roleMatch.findUnique.mockResolvedValue(null);
 
-    await expect(service.getGapReport('candidate-1', 'senior-backend-engineer')).rejects.toBeInstanceOf(
-      NotFoundException,
-    );
+    await expect(
+      service.getGapReport('candidate-1', 'senior-backend-engineer'),
+    ).rejects.toBeInstanceOf(NotFoundException);
 
     expect(httpServiceMock.post).not.toHaveBeenCalled();
   });
@@ -133,7 +160,9 @@ describe('RolesService', () => {
   it('throws PROFILE_INCOMPLETE when graph is missing', async () => {
     prismaMock.profile.findUnique.mockResolvedValue({ graphBuiltAt: null });
 
-    await expect(service.getGapReport('candidate-1', 'senior-backend-engineer')).rejects.toMatchObject({
+    await expect(
+      service.getGapReport('candidate-1', 'senior-backend-engineer'),
+    ).rejects.toMatchObject({
       response: expect.objectContaining({ error: 'PROFILE_INCOMPLETE' }),
     });
 
@@ -149,11 +178,13 @@ describe('RolesService', () => {
     } as AxiosError;
     httpServiceMock.post.mockReturnValue(throwError(() => axiosError));
 
-    await expect(service.getGapReport('candidate-1', 'senior-backend-engineer')).rejects.toBeInstanceOf(
-      ServiceUnavailableException,
-    );
+    await expect(
+      service.getGapReport('candidate-1', 'senior-backend-engineer'),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
 
-    await expect(service.getGapReport('candidate-1', 'senior-backend-engineer')).rejects.toMatchObject({
+    await expect(
+      service.getGapReport('candidate-1', 'senior-backend-engineer'),
+    ).rejects.toMatchObject({
       response: expect.objectContaining({ error: 'WORKER_UNAVAILABLE' }),
     });
   });
@@ -163,7 +194,9 @@ describe('RolesService', () => {
     const timeoutError = new AxiosError('timeout', 'ECONNABORTED');
     httpServiceMock.post.mockReturnValue(throwError(() => timeoutError));
 
-    await expect(service.getGapReport('candidate-1', 'senior-backend-engineer')).rejects.toMatchObject({
+    await expect(
+      service.getGapReport('candidate-1', 'senior-backend-engineer'),
+    ).rejects.toMatchObject({
       response: expect.objectContaining({ error: 'WORKER_UNAVAILABLE' }),
     });
   });

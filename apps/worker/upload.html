@@ -313,6 +313,11 @@
         <div id="success" class="success"></div>
 
         <div id="uploadForm">
+            <div class="field" style="background: none; border-left: none; padding: 0;">
+                <label class="field-label" for="githubUsername" style="display:block; margin-bottom: 5px;">GitHub Username (Optional)</label>
+                <input type="text" id="githubUsername" placeholder="e.g. torvalds" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 15px;">
+            </div>
+
             <div class="upload-area" id="uploadArea">
                 <div class="upload-icon">📁</div>
                 <div class="upload-text">Drag and drop your CV here</div>
@@ -320,6 +325,12 @@
                 <button class="file-input" id="selectBtn">Choose File</button>
                 <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.bmp,.tiff,.gif">
             </div>
+        </div>
+
+        <div id="statusContainer" style="margin-top: 15px; display: none;">
+            <div class="field-label">Pipeline Status:</div>
+            <ul style="list-style-type: none; margin-left: 0;" id="pipelineStatus">
+            </ul>
         </div>
 
         <div id="loading" class="loading">
@@ -449,38 +460,97 @@
             const formData = new FormData();
             formData.append('file', file);
 
+            const githubUsername = document.getElementById('githubUsername').value.trim();
+            const statusContainer = document.getElementById('statusContainer');
+            const pipelineStatus = document.getElementById('pipelineStatus');
+            
             loading.style.display = 'block';
             results.style.display = 'none';
             errorDiv.style.display = 'none';
+            statusContainer.style.display = 'block';
+            
+            pipelineStatus.innerHTML = '<li>⏳ Parsing CV...</li>';
 
             try {
-                const response = await fetch('/parse-cv', {
+                // 1. Parse CV
+                const cvResponse = await fetch('/parse-cv', {
                     method: 'POST',
                     body: formData
                 });
 
-                const contentType = response.headers.get('content-type');
-                let data;
+                const contentType = cvResponse.headers.get('content-type');
+                let cvData;
 
                 if (contentType && contentType.includes('application/json')) {
-                    data = await response.json();
+                    cvData = await cvResponse.json();
                 } else {
-                    const text = await response.text();
-                    showError('Invalid response from server: ' + text.substring(0, 200));
-                    return;
+                    const text = await cvResponse.text();
+                    throw new Error('Invalid response from server: ' + text.substring(0, 200));
                 }
 
-                if (!response.ok) {
-                    const errorMsg = data.error || data.detail || 'Failed to parse CV';
+                if (!cvResponse.ok) {
+                    const errorMsg = cvData.error || cvData.detail || 'Failed to parse CV';
                     throw new Error(errorMsg);
                 }
 
-                parsedData = data.cv;
-                displayResults(data);
-                showSuccess(`CV parsed successfully using ${data.parsing_mode} mode!`);
+                parsedData = cvData.cv;
+                pipelineStatus.innerHTML += '<li>✅ CV Parsed</li>';
+                
+                let githubData = null;
+
+                // 2. Github Analysis
+                if (githubUsername) {
+                    pipelineStatus.innerHTML += '<li>⏳ Running GitHub Analysis...</li>';
+                    
+                    const githubRes = await fetch('/analyze/github', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ github_username: githubUsername })
+                    });
+                    
+                    if (githubRes.ok) {
+                        githubData = await githubRes.json();
+                        pipelineStatus.innerHTML += '<li>✅ GitHub Analysis Complete</li>';
+                    } else {
+                        const err = await githubRes.json();
+                        pipelineStatus.innerHTML += `<li>⚠️ GitHub Analysis Failed: ${err.detail || 'Unknown error'}</li>`;
+                    }
+                }
+
+                // 3. Graph Skill Builder
+                pipelineStatus.innerHTML += '<li>⏳ Building Skill Graph...</li>';
+                const candidateName = parsedData.name || 'Unknown Candidate';
+                const candidateId = 'test-candidate-' + Date.now();
+                
+                const graphRes = await fetch('/graph-skill/rebuild', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        candidate_id: candidateId,
+                        candidate_name: candidateName,
+                        cv_data: parsedData,
+                        github_data: githubData || {}
+                    })
+                });
+                
+                if (graphRes.ok) {
+                    pipelineStatus.innerHTML += '<li>✅ Skill Graph Built</li>';
+                } else {
+                    const err = await graphRes.json();
+                    pipelineStatus.innerHTML += `<li>⚠️ Graph Build Failed: ${err.detail || 'Unknown error'}</li>`;
+                }
+
+                displayResults(cvData);
+                // Also display github result JSON if you want, but for now we'll just show success
+                showSuccess(`Processing complete!`);
             } catch (error) {
                 console.error('Error:', error);
                 showError('Error: ' + error.message);
+                pipelineStatus.innerHTML += `<li>❌ Failed</li>`;
             } finally {
                 loading.style.display = 'none';
             }

@@ -4,6 +4,7 @@ import CompanyAdminProfileForm from "@/components/CompanyAdminProfileForm";
 import Link from "next/link";
 import { FlaskConical } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { ProfileDashboardShell } from "@/components/ProfileDashboardShell";
 
 export const metadata = {
   title: "Profile | AegisHire",
@@ -12,6 +13,8 @@ export const metadata = {
 export default async function ProfilePage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const candidateName = user?.user_metadata?.full_name || user?.email || "";
+
   const response = await apiFetchServer("/profile/me");
 
   let profileData: any = null;

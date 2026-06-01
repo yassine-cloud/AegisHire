@@ -14,10 +14,12 @@ export class Profile implements PrismaProfile {
   @ApiPropertyOptional({ example: 'octocat' })
   githubUsername: string | null;
 
-  @ApiPropertyOptional({ example: 'https://cdn.example.com/resumes/octocat.pdf' })
+  @ApiPropertyOptional({
+    example: 'https://cdn.example.com/resumes/octocat.pdf',
+  })
   resumeFileUrl: string | null;
 
-  @ApiPropertyOptional({ example: { 'Languages': ['Python', 'JavaScript'] } })
+  @ApiPropertyOptional({ example: { Languages: ['Python', 'JavaScript'] } })
   skills: any | null;
 
   @ApiPropertyOptional()

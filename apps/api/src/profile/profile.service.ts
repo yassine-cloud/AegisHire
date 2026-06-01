@@ -12,7 +12,9 @@ export class ProfilesService {
   constructor(private readonly redisService: RedisService) {}
 
   private skillsPayloadHasEntries(skills: Record<string, string[]>): boolean {
-    return Object.values(skills).some((items) => Array.isArray(items) && items.length > 0);
+    return Object.values(skills).some(
+      (items) => Array.isArray(items) && items.length > 0,
+    );
   }
 
   getProfile(userId: string): Promise<Profile | null> {

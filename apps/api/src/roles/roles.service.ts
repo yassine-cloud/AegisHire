@@ -37,14 +37,23 @@ export class RolesService {
   /**
    * Get candidate gap report for a role slug with Redis cache and worker fallback.
    */
-  async getGapReport(candidateId: string, roleSlug: string): Promise<GapReportResponseDto> {
+  async getGapReport(
+    candidateId: string,
+    roleSlug: string,
+  ): Promise<GapReportResponseDto> {
     const role = await prisma.role.findUnique({
       where: { slug: roleSlug },
       select: { id: true, slug: true },
     });
 
     if (!role) {
-      throw new NotFoundException(this.errorEnvelope(HttpStatus.NOT_FOUND, 'ROLE_NOT_FOUND', 'Role not found.'));
+      throw new NotFoundException(
+        this.errorEnvelope(
+          HttpStatus.NOT_FOUND,
+          'ROLE_NOT_FOUND',
+          'Role not found.',
+        ),
+      );
     }
 
     const roleMatch = await prisma.roleMatch.findUnique({
@@ -54,7 +63,11 @@ export class RolesService {
 
     if (!roleMatch) {
       throw new NotFoundException(
-        this.errorEnvelope(HttpStatus.NOT_FOUND, 'ROLE_NOT_FOUND', 'Role match not found for this candidate.'),
+        this.errorEnvelope(
+          HttpStatus.NOT_FOUND,
+          'ROLE_NOT_FOUND',
+          'Role match not found for this candidate.',
+        ),
       );
     }
 
@@ -95,7 +108,10 @@ export class RolesService {
       };
     }
 
-    const workerResult = await this.fetchReportFromWorker(candidateId, roleSlug);
+    const workerResult = await this.fetchReportFromWorker(
+      candidateId,
+      roleSlug,
+    );
 
     const response: GapReportResponseDto = {
       role_id: role.slug,
@@ -110,14 +126,20 @@ export class RolesService {
         candidateId,
         roleId: role.id,
         gaps: response.gaps as unknown as Prisma.InputJsonValue,
-        priorityOrder: response.overall_priority_order as unknown as Prisma.InputJsonValue,
-        expiresAt: new Date(Date.now() + RolesService.GAP_REPORT_TTL_SECONDS * 1000),
+        priorityOrder:
+          response.overall_priority_order as unknown as Prisma.InputJsonValue,
+        expiresAt: new Date(
+          Date.now() + RolesService.GAP_REPORT_TTL_SECONDS * 1000,
+        ),
       },
       update: {
         gaps: response.gaps as unknown as Prisma.InputJsonValue,
-        priorityOrder: response.overall_priority_order as unknown as Prisma.InputJsonValue,
+        priorityOrder:
+          response.overall_priority_order as unknown as Prisma.InputJsonValue,
         generatedAt: new Date(),
-        expiresAt: new Date(Date.now() + RolesService.GAP_REPORT_TTL_SECONDS * 1000),
+        expiresAt: new Date(
+          Date.now() + RolesService.GAP_REPORT_TTL_SECONDS * 1000,
+        ),
       },
     });
 
@@ -129,7 +151,9 @@ export class RolesService {
     return `gap_report:${candidateId}:${roleSlug}`;
   }
 
-  private async getCachedReport(cacheKey: string): Promise<WorkerGapReport | null> {
+  private async getCachedReport(
+    cacheKey: string,
+  ): Promise<WorkerGapReport | null> {
     try {
       const cached = await this.redisService.get(cacheKey);
       if (!cached) {
@@ -138,24 +162,42 @@ export class RolesService {
 
       return this.parseWorkerGapReport(JSON.parse(cached) as unknown);
     } catch (error) {
-      this.logger.warn(`Redis read failed. Continuing without cache. ${this.stringifyError(error)}`);
+      this.logger.warn(
+        `Redis read failed. Continuing without cache. ${this.stringifyError(error)}`,
+      );
       return null;
     }
   }
 
-  private async setCachedReport(cacheKey: string, report: GapReportResponseDto): Promise<void> {
+  private async setCachedReport(
+    cacheKey: string,
+    report: GapReportResponseDto,
+  ): Promise<void> {
     try {
-      await this.redisService.set(cacheKey, JSON.stringify(report), RolesService.GAP_REPORT_TTL_SECONDS);
+      await this.redisService.set(
+        cacheKey,
+        JSON.stringify(report),
+        RolesService.GAP_REPORT_TTL_SECONDS,
+      );
     } catch (error) {
-      this.logger.warn(`Redis write failed. Continuing without cache. ${this.stringifyError(error)}`);
+      this.logger.warn(
+        `Redis write failed. Continuing without cache. ${this.stringifyError(error)}`,
+      );
     }
   }
 
-  private async fetchReportFromWorker(candidateId: string, roleSlug: string): Promise<WorkerGapReport> {
+  private async fetchReportFromWorker(
+    candidateId: string,
+    roleSlug: string,
+  ): Promise<WorkerGapReport> {
     const workerBaseUrl = process.env.WORKER_BASE_URL;
     if (!workerBaseUrl) {
       throw new ServiceUnavailableException(
-        this.errorEnvelope(HttpStatus.SERVICE_UNAVAILABLE, 'WORKER_UNAVAILABLE', 'Worker base URL is missing.'),
+        this.errorEnvelope(
+          HttpStatus.SERVICE_UNAVAILABLE,
+          'WORKER_UNAVAILABLE',
+          'Worker base URL is missing.',
+        ),
       );
     }
 
@@ -196,7 +238,11 @@ export class RolesService {
   private parseWorkerGapReport(value: unknown): WorkerGapReport {
     if (!this.isObject(value)) {
       throw new ServiceUnavailableException(
-        this.errorEnvelope(HttpStatus.SERVICE_UNAVAILABLE, 'WORKER_UNAVAILABLE', 'Worker returned an invalid payload.'),
+        this.errorEnvelope(
+          HttpStatus.SERVICE_UNAVAILABLE,
+          'WORKER_UNAVAILABLE',
+          'Worker returned an invalid payload.',
+        ),
       );
     }
 
@@ -205,12 +251,18 @@ export class RolesService {
 
     if (!Array.isArray(gaps) || !Array.isArray(overallPriorityOrder)) {
       throw new ServiceUnavailableException(
-        this.errorEnvelope(HttpStatus.SERVICE_UNAVAILABLE, 'WORKER_UNAVAILABLE', 'Worker returned an invalid payload.'),
+        this.errorEnvelope(
+          HttpStatus.SERVICE_UNAVAILABLE,
+          'WORKER_UNAVAILABLE',
+          'Worker returned an invalid payload.',
+        ),
       );
     }
 
     const validatedGaps = gaps.map((gap) => this.parseGapEntry(gap));
-    const validatedOrder = overallPriorityOrder.filter((item): item is string => typeof item === 'string');
+    const validatedOrder = overallPriorityOrder.filter(
+      (item): item is string => typeof item === 'string',
+    );
 
     return {
       gaps: validatedGaps,
@@ -221,21 +273,43 @@ export class RolesService {
   private parseGapEntry(value: unknown): GapEntryDto {
     if (!this.isObject(value)) {
       throw new ServiceUnavailableException(
-        this.errorEnvelope(HttpStatus.SERVICE_UNAVAILABLE, 'WORKER_UNAVAILABLE', 'Worker returned an invalid gap entry.'),
+        this.errorEnvelope(
+          HttpStatus.SERVICE_UNAVAILABLE,
+          'WORKER_UNAVAILABLE',
+          'Worker returned an invalid gap entry.',
+        ),
       );
     }
 
-    const { skill, importance, current_level, recommendation, estimated_effort } = value;
+    const {
+      skill,
+      importance,
+      current_level,
+      recommendation,
+      estimated_effort,
+    } = value;
 
-    if (typeof skill !== 'string' || typeof recommendation !== 'string' || typeof estimated_effort !== 'string') {
+    if (
+      typeof skill !== 'string' ||
+      typeof recommendation !== 'string' ||
+      typeof estimated_effort !== 'string'
+    ) {
       throw new ServiceUnavailableException(
-        this.errorEnvelope(HttpStatus.SERVICE_UNAVAILABLE, 'WORKER_UNAVAILABLE', 'Worker returned an invalid gap entry.'),
+        this.errorEnvelope(
+          HttpStatus.SERVICE_UNAVAILABLE,
+          'WORKER_UNAVAILABLE',
+          'Worker returned an invalid gap entry.',
+        ),
       );
     }
 
     if (!this.isImportance(importance) || !this.isCurrentLevel(current_level)) {
       throw new ServiceUnavailableException(
-        this.errorEnvelope(HttpStatus.SERVICE_UNAVAILABLE, 'WORKER_UNAVAILABLE', 'Worker returned an invalid gap entry.'),
+        this.errorEnvelope(
+          HttpStatus.SERVICE_UNAVAILABLE,
+          'WORKER_UNAVAILABLE',
+          'Worker returned an invalid gap entry.',
+        ),
       );
     }
 
@@ -248,7 +322,11 @@ export class RolesService {
     };
   }
 
-  private errorEnvelope(statusCode: number, error: string, message: string): {
+  private errorEnvelope(
+    statusCode: number,
+    error: string,
+    message: string,
+  ): {
     statusCode: number;
     error: string;
     message: string;
@@ -270,7 +348,9 @@ export class RolesService {
     return value === 'high' || value === 'medium' || value === 'low';
   }
 
-  private isCurrentLevel(value: unknown): value is GapEntryDto['current_level'] {
+  private isCurrentLevel(
+    value: unknown,
+  ): value is GapEntryDto['current_level'] {
     return value === 'none' || value === 'beginner' || value === 'intermediate';
   }
 
@@ -283,14 +363,31 @@ export class RolesService {
    * The missing skills are a representative set that a "software-engineer"
    * role would typically require beyond a basic CV.
    */
-  async seedTestData(candidateId: string, payload?: TestSetupRequestDto): Promise<TestSetupResponseDto> {
+  async seedTestData(
+    candidateId: string,
+    payload?: TestSetupRequestDto,
+  ): Promise<TestSetupResponseDto> {
     const roleSlug = payload?.roleSlug?.trim() || 'software-engineer';
     const roleTitle = payload?.roleTitle?.trim() || 'Software Engineer';
-    const compatibilityScore = Math.max(0, Math.min(69, payload?.compatibilityScore ?? 40));
-    const missingSkillsInput = (payload?.missingSkills ?? ['TypeScript', 'Docker', 'System Design', 'CI/CD', 'PostgreSQL'])
+    const compatibilityScore = Math.max(
+      0,
+      Math.min(69, payload?.compatibilityScore ?? 40),
+    );
+    const missingSkillsInput = (
+      payload?.missingSkills ?? [
+        'TypeScript',
+        'Docker',
+        'System Design',
+        'CI/CD',
+        'PostgreSQL',
+      ]
+    )
       .map((skill) => skill.trim())
       .filter((skill) => skill.length > 0);
-    const missingSkills = missingSkillsInput.length > 0 ? missingSkillsInput : ['TypeScript', 'Docker', 'System Design'];
+    const missingSkills =
+      missingSkillsInput.length > 0
+        ? missingSkillsInput
+        : ['TypeScript', 'Docker', 'System Design'];
     const requiredSkills = missingSkills.map((skill, index) => ({
       skill,
       importance: index < 3 ? 'high' : 'medium',
@@ -301,7 +398,8 @@ export class RolesService {
       create: {
         slug: roleSlug,
         title: roleTitle,
-        description: 'A general software engineering position requiring full-stack capabilities.',
+        description:
+          'A general software engineering position requiring full-stack capabilities.',
         requiredSkills: requiredSkills as unknown as Prisma.InputJsonValue,
         preferredSkills: [] as unknown as Prisma.InputJsonValue,
       },
@@ -313,7 +411,8 @@ export class RolesService {
 
     const missingSkillsPayload = missingSkills.map((skill) => ({
       skill,
-      importance: requiredSkills.find((r) => r.skill === skill)?.importance ?? 'low',
+      importance:
+        requiredSkills.find((r) => r.skill === skill)?.importance ?? 'low',
     }));
 
     await prisma.roleMatch.upsert({
@@ -345,7 +444,9 @@ export class RolesService {
 
     // Invalidate any existing cached gap report
     try {
-      await this.redisService.delByPattern(`gap_report:${candidateId}:${roleSlug}`);
+      await this.redisService.delByPattern(
+        `gap_report:${candidateId}:${roleSlug}`,
+      );
     } catch (_) {
       // non-critical
     }
