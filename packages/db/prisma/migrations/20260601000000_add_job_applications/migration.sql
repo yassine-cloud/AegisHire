@@ -20,6 +20,3 @@ CREATE UNIQUE INDEX "job_applications_job_id_candidate_id_key" ON "job_applicati
 
 -- AddForeignKey
 ALTER TABLE "job_applications" ADD CONSTRAINT "job_applications_job_id_fkey" FOREIGN KEY ("job_id") REFERENCES "jobs"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-pnpm --filter api dev    # Terminal 1
-pnpm --filter frontend dev # Terminal 2pnpm --filter api dev    # Terminal 1
-pnpm --filter frontend dev # Terminal 2

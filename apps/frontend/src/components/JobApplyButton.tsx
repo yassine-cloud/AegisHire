@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { ApplyJobFlow } from './ApplyJobFlow';
 import { useToast } from './ui/use-toast';
 import { CheckCircle2, Loader2 } from 'lucide-react';
+import { apiFetchClient } from '@/lib/api.client';
 
 interface JobApplyButtonProps {
   jobId: string;
@@ -31,13 +32,9 @@ export function JobApplyButton({
   const [hasApplied, setHasApplied] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    checkIfApplied();
-  }, [jobId]);
-
-  const checkIfApplied = async () => {
+  const checkIfApplied = useCallback(async () => {
     try {
-      const response = await fetch(`/api/job-applications/job/${jobId}/check`);
+      const response = await apiFetchClient(`/job-applications/job/${jobId}/check`);
       if (response.ok) {
         const data = await response.json();
         setHasApplied(data.applied);
@@ -47,9 +44,13 @@ export function JobApplyButton({
     } finally {
       setIsChecking(false);
     }
-  };
+  }, [jobId]);
 
-  const handleApplicationSubmitted = (applicationId: string) => {
+  useEffect(() => {
+    void Promise.resolve().then(checkIfApplied);
+  }, [checkIfApplied]);
+
+  const handleApplicationSubmitted = () => {
     setHasApplied(true);
     setIsOpen(false);
     toast({

@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Loader2, Trash2, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
+import { apiFetchClient } from '@/lib/api.client';
 
 interface Application {
   id: string;
@@ -29,13 +30,9 @@ export default function ApplicationsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadApplications();
-  }, []);
-
-  const loadApplications = async () => {
+  const loadApplications = useCallback(async () => {
     try {
-      const response = await fetch('/api/job-applications');
+      const response = await apiFetchClient('/job-applications');
       if (response.ok) {
         const data = await response.json();
         setApplications(data);
@@ -45,13 +42,17 @@ export default function ApplicationsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void Promise.resolve().then(loadApplications);
+  }, [loadApplications]);
 
   const handleDelete = async (applicationId: string) => {
     if (!confirm('Are you sure you want to delete this application?')) return;
 
     try {
-      const response = await fetch(`/api/job-applications/${applicationId}`, {
+      const response = await apiFetchClient(`/job-applications/${applicationId}`, {
         method: 'DELETE',
       });
       if (response.ok) {

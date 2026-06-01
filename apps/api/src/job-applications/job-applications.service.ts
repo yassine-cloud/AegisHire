@@ -1,13 +1,35 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '@aegishire/db';
 import type { JobApplication } from '@aegishire/db';
-import { CreateJobApplicationDto, UpdateJobApplicationDto } from './dto/job-application.dto';
+import {
+  CreateJobApplicationDto,
+  UpdateJobApplicationDto,
+} from './dto/job-application.dto';
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 @Injectable()
 export class JobApplicationsService {
   constructor(private prisma: PrismaService) {}
 
-  async createApplication(candidateId: string, dto: CreateJobApplicationDto): Promise<JobApplication> {
+  private assertUuid(value: string, fieldName: string): void {
+    if (!UUID_PATTERN.test(value)) {
+      throw new BadRequestException(`${fieldName} must be a valid UUID`);
+    }
+  }
+
+  async createApplication(
+    candidateId: string,
+    dto: CreateJobApplicationDto,
+  ): Promise<JobApplication> {
+    this.assertUuid(candidateId, 'candidateId');
+    this.assertUuid(dto.jobId, 'jobId');
+
     // Check if already applied to this job
     const existing = await this.prisma.jobApplication.findUnique({
       where: {
@@ -42,7 +64,13 @@ export class JobApplicationsService {
     });
   }
 
-  async getApplication(applicationId: string, candidateId: string): Promise<JobApplication> {
+  async getApplication(
+    applicationId: string,
+    candidateId: string,
+  ): Promise<JobApplication> {
+    this.assertUuid(applicationId, 'applicationId');
+    this.assertUuid(candidateId, 'candidateId');
+
     const application = await this.prisma.jobApplication.findUnique({
       where: { id: applicationId },
     });
@@ -76,11 +104,20 @@ export class JobApplicationsService {
     });
   }
 
-  async getUserApplications(candidateId: string): Promise<JobApplication[]> {
+  async getUserApplications(candidateId: string): Promise<any[]> {
+    this.assertUuid(candidateId, 'candidateId');
+
     return this.prisma.jobApplication.findMany({
       where: {
         candidateId,
         archivedAt: null,
+      },
+      include: {
+        job: {
+          include: {
+            company: true,
+          },
+        },
       },
       orderBy: {
         appliedAt: 'desc',
@@ -88,8 +125,11 @@ export class JobApplicationsService {
     });
   }
 
-  async deleteApplication(applicationId: string, candidateId: string): Promise<void> {
-    const application = await this.getApplication(applicationId, candidateId);
+  async deleteApplication(
+    applicationId: string,
+    candidateId: string,
+  ): Promise<void> {
+    await this.getApplication(applicationId, candidateId);
 
     await this.prisma.jobApplication.update({
       where: { id: applicationId },
@@ -100,6 +140,9 @@ export class JobApplicationsService {
   }
 
   async checkIfApplied(jobId: string, candidateId: string): Promise<boolean> {
+    this.assertUuid(jobId, 'jobId');
+    this.assertUuid(candidateId, 'candidateId');
+
     const application = await this.prisma.jobApplication.findUnique({
       where: {
         jobId_candidateId: {
@@ -112,8 +155,16 @@ export class JobApplicationsService {
     return !!application;
   }
 
-  async getApplicationWithJob(applicationId: string, candidateId: string) {
-    const application = await this.getApplication(applicationId, candidateId);
+  async getApplicationWithJob(
+    applicationId: string,
+    candidateId: string,
+  ): Promise<
+    | (JobApplication & {
+        job: any;
+      })
+    | null
+  > {
+    await this.getApplication(applicationId, candidateId);
 
     return this.prisma.jobApplication.findUnique({
       where: { id: applicationId },

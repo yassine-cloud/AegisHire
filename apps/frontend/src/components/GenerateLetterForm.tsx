@@ -8,6 +8,7 @@ import { Input } from './ui/input';
 import { Select, SelectItem } from './ui/select';
 import { Alert, AlertDescription } from './ui/alert';
 import { Loader2, Copy, Check } from 'lucide-react';
+import { apiFetchClient } from '@/lib/api.client';
 
 interface GenerateLetterFormProps {
   onSuccess?: (response: GeneratedContent) => void;
@@ -32,7 +33,7 @@ interface GeneratedContent {
   motivationLetter?: string;
 }
 
-export function GenerateLetterForm({ onSuccess, jobId, jobInfo, userInfo }: GenerateLetterFormProps) {
+export function GenerateLetterForm({ onSuccess, jobInfo, userInfo }: GenerateLetterFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -81,7 +82,7 @@ export function GenerateLetterForm({ onSuccess, jobId, jobInfo, userInfo }: Gene
         throw new Error('Please fill in all required fields');
       }
 
-      const response = await fetch('/api/ai-generation/generate-application', {
+      const response = await apiFetchClient('/ai-generation/generate-application', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

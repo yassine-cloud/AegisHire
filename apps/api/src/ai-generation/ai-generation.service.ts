@@ -4,20 +4,40 @@ import axios from 'axios';
 import { GenerateLetterDto } from './dto/generate-letter.dto';
 import { GenerateLetterResponseDto } from './dto/generate-letter-response.dto';
 
+interface GroqChatCompletionResponse {
+  choices?: Array<{
+    message?: {
+      content?: string;
+    };
+  }>;
+}
+
+interface GroqErrorResponse {
+  error?: {
+    message?: string;
+  };
+}
+
 @Injectable()
 export class AIGenerationService {
   private readonly logger = new Logger(AIGenerationService.name);
-  private readonly groqApiKey: string;
-  private readonly groqApiUrl = 'https://api.groq.com/openai/v1/chat/completions';
+  private readonly groqApiKey: string | undefined;
+  private readonly groqModel: string;
+  private readonly groqApiUrl =
+    'https://api.groq.com/openai/v1/chat/completions';
 
   constructor(private configService: ConfigService) {
     this.groqApiKey = this.configService.get<string>('GROQ_API_KEY');
+    this.groqModel =
+      this.configService.get<string>('GROQ_MODEL') || 'llama-3.3-70b-versatile';
     if (!this.groqApiKey) {
       this.logger.warn('GROQ_API_KEY is not configured');
     }
   }
 
-  async generateLetters(dto: GenerateLetterDto): Promise<GenerateLetterResponseDto> {
+  async generateLetters(
+    dto: GenerateLetterDto,
+  ): Promise<GenerateLetterResponseDto> {
     if (!this.groqApiKey) {
       throw new BadRequestException('GROQ API key is not configured');
     }
@@ -30,7 +50,10 @@ export class AIGenerationService {
     }
 
     // Generate motivation letter if requested
-    if (dto.applicationType === 'motivation-letter' || dto.applicationType === 'both') {
+    if (
+      dto.applicationType === 'motivation-letter' ||
+      dto.applicationType === 'both'
+    ) {
       result.motivationLetter = await this.generateMotivationLetter(dto);
     }
 
@@ -42,7 +65,9 @@ export class AIGenerationService {
     return this.callGroqAPI(prompt, 'email');
   }
 
-  private async generateMotivationLetter(dto: GenerateLetterDto): Promise<string> {
+  private async generateMotivationLetter(
+    dto: GenerateLetterDto,
+  ): Promise<string> {
     const prompt = this.buildMotivationLetterPrompt(dto);
     return this.callGroqAPI(prompt, 'motivation-letter');
   }
@@ -116,16 +141,20 @@ Requirements:
 Generate the motivation letter:`;
   }
 
-  private async callGroqAPI(prompt: string, type: 'email' | 'motivation-letter'): Promise<string> {
+  private async callGroqAPI(
+    prompt: string,
+    type: 'email' | 'motivation-letter',
+  ): Promise<string> {
     try {
-      const response = await axios.post(
+      const response = await axios.post<GroqChatCompletionResponse>(
         this.groqApiUrl,
         {
-          model: 'mixtral-8x7b-32768', // or another available GROQ model
+          model: this.groqModel,
           messages: [
             {
               role: 'system',
-              content: 'You are a professional writing assistant specializing in job applications. Provide high-quality, compelling content.',
+              content:
+                'You are a professional writing assistant specializing in job applications. Provide high-quality, compelling content.',
             },
             {
               role: 'user',
@@ -144,14 +173,16 @@ Generate the motivation letter:`;
         },
       );
 
-      if (!response.data.choices || response.data.choices.length === 0) {
+      const generatedContent = response.data.choices?.[0]?.message?.content;
+
+      if (!generatedContent) {
         throw new BadRequestException('No response from GROQ API');
       }
 
-      return response.data.choices[0].message.content;
+      return generatedContent;
     } catch (error) {
       this.logger.error('Error calling GROQ API', error);
-      if (axios.isAxiosError(error)) {
+      if (axios.isAxiosError<GroqErrorResponse>(error)) {
         throw new BadRequestException(
           `GROQ API Error: ${error.response?.data?.error?.message || error.message}`,
         );

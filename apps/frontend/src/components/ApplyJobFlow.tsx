@@ -5,6 +5,7 @@ import { GenerateLetterForm } from './GenerateLetterForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Loader2, ArrowLeft } from 'lucide-react';
+import { apiFetchClient } from '@/lib/api.client';
 
 interface ApplyJobFlowProps {
   job: {
@@ -35,13 +36,12 @@ export function ApplyJobFlow({
 }: ApplyJobFlowProps) {
   const [step, setStep] = useState<'apply' | 'generate'>('apply');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [skipAI, setSkipAI] = useState(false);
 
   const handleSkipAI = async () => {
     setIsSubmitting(true);
     try {
       // Create application without AI-generated content
-      const response = await fetch('/api/job-applications', {
+      const response = await apiFetchClient('/job-applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jobId: job.id }),
@@ -65,7 +65,7 @@ export function ApplyJobFlow({
     setIsSubmitting(true);
     try {
       // Create application with AI-generated content
-      const response = await fetch('/api/job-applications', {
+      const response = await apiFetchClient('/job-applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
