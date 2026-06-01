@@ -180,3 +180,16 @@ model InterviewQuestion {
 
   @@map("interview_questions")
 }
+
+model InterviewPhaseReport {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  candidateId String   @map("candidate_id") @db.Text
+  jobOfferId  String   @map("job_offer_id") @db.Text
+  phase       String   @db.VarChar(40)
+  report      Json
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([candidateId, jobOfferId])
+  @@index([phase])
+  @@map("interview_phase_reports")
+}

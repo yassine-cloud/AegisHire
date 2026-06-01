@@ -1,0 +1,16 @@
+{
+  "job_title": "Senior Full-Stack Engineer",
+  "job_description": "We are looking for a Senior Full-Stack Engineer to architect and scale our microservices. You will be responsible for building resilient APIs, managing distributed state, and creating high-performance interactive user interfaces. Our platform handles thousands of concurrent users, so deep understanding of system design, database query optimization, and frontend performance is essential. You will be expected to guide junior developers and drive technical decisions.",
+  "required_skills": [
+    "React",
+    "Next.js",
+    "Node.js",
+    "NestJS",
+    "PostgreSQL",
+    "Redis",
+    "Microservices Architecture",
+    "System Design",
+    "TypeScript",
+    "Docker"
+  ]
+}
