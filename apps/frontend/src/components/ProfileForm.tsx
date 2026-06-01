@@ -436,25 +436,34 @@ export default function ProfileForm({ initialData, isNew }: ProfileFormProps) {
             </div>
           )}
 
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={!selectedFile || parsing}
-            onClick={handleParseCV}
-            className="w-full"
-          >
-            {parsing ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Extracting skills...
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-4 w-4 mr-2" />
-                Extract Skills with AI
-              </>
-            )}
-          </Button>
+        </Button>
+
+   {parseError && (
+  <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">
+    <XCircle className="h-4 w-4 shrink-0" />
+    {parseError}
+  </div>
+)}
+
+<Button
+  type="button"
+  variant="secondary"
+  disabled={!selectedFile || parsing}
+  onClick={handleParseCV}
+  className="w-full"
+>
+  {parsing ? (
+    <>
+      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+      Extracting skills...
+    </>
+  ) : (
+    <>
+      <Sparkles className="h-4 w-4 mr-2" />
+      Extract Skills with AI
+    </>
+  )}
+</Button>
 
         {/* Extracted Skills Display */}
         {skills && (
