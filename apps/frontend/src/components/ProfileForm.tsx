@@ -65,6 +65,14 @@ export default function ProfileForm({ initialData, isNew }: ProfileFormProps) {
     ? Object.values(skills).flat().length
     : 0;
 
+  const normalizedSkillsEntries = skills
+    ? Object.entries(skills).filter(([, categorySkills]) => Array.isArray(categorySkills))
+    : [];
+
+  const normalizedInitialSkillEntries = initialData.skills
+    ? Object.entries(initialData.skills).filter(([, categorySkills]) => Array.isArray(categorySkills))
+    : [];
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -298,13 +306,13 @@ export default function ProfileForm({ initialData, isNew }: ProfileFormProps) {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {Object.entries(skills).map(([category, categorySkills]) => (
+              {normalizedSkillsEntries.map(([category, categorySkills]) => (
                 <div key={category}>
                   <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
                     {category}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
-                    {categorySkills.map((skill) => (
+                    {(categorySkills as string[]).map((skill) => (
                       <Badge
                         key={skill}
                         variant="secondary"
@@ -341,7 +349,7 @@ export default function ProfileForm({ initialData, isNew }: ProfileFormProps) {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {Object.entries(initialData.skills).map(([category, categorySkills]) => (
+              {normalizedInitialSkillEntries.map(([category, categorySkills]) => (
                 <div key={category}>
                   <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
                     {category}
