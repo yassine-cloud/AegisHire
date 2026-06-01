@@ -39,18 +39,68 @@ enum QuestionType {
   design     @map("design")
 }
 
+enum AccountType {
+  developer @map("developer")
+  company   @map("company")
+  admin     @map("admin")
+}
+
 model Profile {
-  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId           String    @unique @map("user_id") @db.Uuid
-  githubUsername   String?   @map("github_username") @db.VarChar(100)
-  resumeFileUrl    String?   @map("resume_file_url") @db.Text
+  id               String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String      @unique @map("user_id") @db.Uuid
+  accountType      AccountType @default(developer) @map("account_type")
+  githubUsername   String?     @map("github_username") @db.VarChar(100)
+  resumeFileUrl    String?     @map("resume_file_url") @db.Text
   skills           Json?
-  githubAnalyzedAt DateTime? @map("github_analyzed_at")
-  resumeParsedAt   DateTime? @map("resume_parsed_at")
-  graphBuiltAt     DateTime? @map("graph_built_at")
-  createdAt        DateTime  @default(now()) @map("created_at")
+  githubAnalyzedAt DateTime?   @map("github_analyzed_at")
+  resumeParsedAt   DateTime?   @map("resume_parsed_at")
+  graphBuiltAt     DateTime?   @map("graph_built_at")
+  archivedAt       DateTime?   @map("archived_at")
+  createdAt        DateTime    @default(now()) @map("created_at")
+
+  company          Company?    @relation("CompanyOwner")
 
   @@map("profiles")
+}
+
+model Company {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerUserId   String   @unique @map("owner_user_id") @db.Uuid
+  name          String   @db.VarChar(255)
+  industry      String?  @db.VarChar(255)
+  size          String?  @db.VarChar(100)
+  values        Json?
+  websiteUrl    String?  @map("website_url") @db.Text
+  description   String?  @db.Text
+  contactEmail  String?  @map("contact_email") @db.VarChar(255)
+  archivedAt    DateTime? @map("archived_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  ownerProfile Profile @relation("CompanyOwner", fields: [ownerUserId], references: [userId])
+  jobs Job[]
+
+  @@map("companies")
+}
+
+model Job {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId       String   @map("company_id") @db.Uuid
+  title           String   @db.VarChar(255)
+  location        String?  @db.VarChar(255)
+  employmentType  String?  @map("employment_type") @db.VarChar(100)
+  description     String   @db.Text
+  responsibilities Json?
+  requirements    Json?
+  salaryRange     String?  @map("salary_range") @db.VarChar(255)
+  status          String   @default("published") @db.VarChar(50)
+  archivedAt      DateTime? @map("archived_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@map("jobs")
 }
 
 model Role {

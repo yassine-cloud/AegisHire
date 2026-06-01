@@ -1,4 +1,4 @@
-import { Profile as PrismaProfile } from '@aegishire/db';
+import { AccountType, Profile as PrismaProfile } from '@aegishire/db';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class Profile implements PrismaProfile {
@@ -7,6 +7,9 @@ export class Profile implements PrismaProfile {
 
   @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
   userId: string;
+
+  @ApiProperty({ enum: AccountType, example: AccountType.developer })
+  accountType: AccountType;
 
   @ApiPropertyOptional({ example: 'octocat' })
   githubUsername: string | null;
@@ -27,6 +30,9 @@ export class Profile implements PrismaProfile {
 
   @ApiPropertyOptional()
   graphBuiltAt: Date | null;
+
+  @ApiPropertyOptional()
+  archivedAt: Date | null;
 
   @ApiProperty()
   createdAt: Date;
