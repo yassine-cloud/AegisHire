@@ -3,6 +3,7 @@ import { prisma, Prisma } from '@aegishire/db';
 import type { Profile } from '@aegishire/db';
 import type { UpdateProfileDto } from './dto/update-profile.dto';
 import { RedisService } from '../shared/redis/redis.service';
+import type { SupabaseJwtPayload } from '../auth/supabase-jwt.service';
 
 @Injectable()
 export class ProfilesService {
@@ -23,7 +24,7 @@ export class ProfilesService {
   }
 
   async updateProfile(
-    userId: string,
+    user: SupabaseJwtPayload,
     updateProfileDto: UpdateProfileDto,
   ): Promise<Profile> {
     const skillsJson = updateProfileDto.skills
@@ -31,16 +32,15 @@ export class ProfilesService {
       : undefined;
     const graphBuiltAt =
       updateProfileDto.skills !== undefined
-        ? updateProfileDto.skills &&
-          this.skillsPayloadHasEntries(updateProfileDto.skills)
+        ? updateProfileDto.skills && this.skillsPayloadHasEntries(updateProfileDto.skills)
           ? new Date()
           : null
         : undefined;
 
     const profile = await prisma.profile.upsert({
-      where: { userId },
+      where: { userId: user.id },
       create: {
-        userId,
+        userId: user.id,
         githubUsername: updateProfileDto.githubUsername,
         resumeFileUrl: updateProfileDto.resumeFileUrl,
         // @ts-ignore
@@ -57,13 +57,10 @@ export class ProfilesService {
     });
 
     try {
-      await this.redisService.delByPattern(`gap_report:${userId}:*`);
+      await this.redisService.delByPattern(`gap_report:${user.id}:*`);
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'unknown error';
-      this.logger.warn(
-        `Failed to invalidate gap-report cache for candidate ${userId}: ${errorMessage}`,
-      );
+      const errorMessage = error instanceof Error ? error.message : 'unknown error';
+      this.logger.warn(`Failed to invalidate gap-report cache for candidate ${user.id}: ${errorMessage}`);
     }
 
     return profile;
