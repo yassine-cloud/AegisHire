@@ -32,11 +32,29 @@ docker compose version
 
 ## 3. Local Services (Docker)
 
-To start the required local services (Redis):
+To start the Docker stack for frontend, API, and Redis:
 
 ```bash
 docker compose up -d
 ```
+
+This uses:
+
+- Nginx gateway on `http://localhost`
+- Frontend internally on `frontend:4000`
+- API internally on `api:3000`
+- Worker internally on `worker:8000`
+- Redis on `localhost:6379`
+- Neo4j browser on `http://localhost:7474`
+
+Gateway routing:
+
+- `http://localhost/` -> frontend
+- `http://localhost/api` -> frontend
+- `http://localhost/back` -> backend
+- `http://localhost/worker` -> worker
+
+Create a root `.env` from `.env.example` before starting the stack so Docker can pass the Supabase and Prisma values into the images.
 
 ## 3. Environment Files
 
@@ -136,6 +154,12 @@ Worker is not included in `pnpm dev` and should be started separately.
 - API: `http://localhost:3001`
 - Worker: `http://localhost:8000`
 - Prisma Studio (when started): `http://localhost:5555`
+
+For the Docker stack, use:
+
+- Gateway (frontend): `http://localhost`
+- Backend via gateway: `http://localhost/back`
+- Worker via gateway: `http://localhost/worker`
 
 ## 9. Common Issues
 
