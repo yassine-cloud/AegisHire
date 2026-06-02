@@ -12,6 +12,7 @@ import { CompaniesModule } from './companies/companies.module';
 import { AdminModule } from './admin/admin.module';
 import { GraphSkillModule } from './graph-skill/graph-skill.module';
 import { ExternalJobsModule } from './external-jobs/external-jobs.module';
+import { AtsModule } from './ats/ats.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { ExternalJobsModule } from './external-jobs/external-jobs.module';
     GithubAnalysisModule,
     GraphSkillModule,
     ExternalJobsModule,
+    AtsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
