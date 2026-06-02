@@ -21,7 +21,8 @@ export default async function ProfilePage() {
   let isNewProfile = true;
 
   if (response.ok) {
-    const data = await response.json();
+    const text = await response.text();
+    const data = text.trim() ? (JSON.parse(text) as Record<string, unknown>) : null;
     if (data && Object.keys(data).length > 0) {
       profileData = data;
       isNewProfile = false;
