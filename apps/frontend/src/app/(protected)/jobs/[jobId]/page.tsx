@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { apiFetchServer } from "@/lib/api.server";
+import { JobApplyButton } from "@/components/JobApplyButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -176,9 +177,13 @@ export default async function JobDetailsPage({ params }: { params: Promise<{ job
               <CardDescription>Use the company contact details to follow up on this opening.</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">
-                This page is ready for future application flow integration.
-              </p>
+              <JobApplyButton
+                jobId={job.id}
+                jobTitle={job.title}
+                companyName={job.company.name}
+                jobDescription={job.description}
+                companyIndustry={job.company.industry ?? undefined}
+              />
             </CardContent>
           </Card>
         </div>

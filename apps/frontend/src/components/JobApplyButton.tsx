@@ -14,7 +14,7 @@ interface JobApplyButtonProps {
   companyName: string;
   jobDescription: string;
   companyIndustry?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'default' | 'lg';
   className?: string;
 }
 
@@ -24,7 +24,7 @@ export function JobApplyButton({
   companyName,
   jobDescription,
   companyIndustry,
-  size = 'md',
+  size = 'default',
   className,
 }: JobApplyButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
