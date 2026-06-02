@@ -26,6 +26,10 @@ class Settings(BaseSettings):
 
     database_url: str = Field(alias="DIRECT_URL", min_length=1)
 
+    neo4j_uri: str = Field(default="bolt://localhost:7687", alias="NEO4J_URI")
+    neo4j_user: str | None = Field(default=None, alias="NEO4J_USER")
+    neo4j_password: str | None = Field(default=None, alias="NEO4J_PASSWORD")
+
     @model_validator(mode="after")
     def validate_provider_credentials(self) -> "Settings":
         """Ensure provider-specific API keys are present."""
