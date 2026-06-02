@@ -11,7 +11,10 @@ import { GithubAnalysisModule } from './github-analysis/github-analysis.module';
 import { CompaniesModule } from './companies/companies.module';
 import { AdminModule } from './admin/admin.module';
 import { GraphSkillModule } from './graph-skill/graph-skill.module';
+import { AIGenerationModule } from './ai-generation/ai-generation.module';
+import { JobApplicationsModule } from './job-applications/job-applications.module';
 import { ExternalJobsModule } from './external-jobs/external-jobs.module';
+
 
 @Module({
   imports: [
@@ -27,6 +30,8 @@ import { ExternalJobsModule } from './external-jobs/external-jobs.module';
     RolesModule,
     GithubAnalysisModule,
     GraphSkillModule,
+    AIGenerationModule,
+    JobApplicationsModule,
     ExternalJobsModule,
   ],
   controllers: [AppController],

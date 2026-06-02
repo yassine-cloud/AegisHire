@@ -99,8 +99,28 @@ model Job {
   updatedAt       DateTime @updatedAt @map("updated_at")
 
   company Company @relation(fields: [companyId], references: [id])
+  applications JobApplication[]
 
   @@map("jobs")
+}
+
+model JobApplication {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  jobId           String   @map("job_id") @db.Uuid
+  candidateId     String   @map("candidate_id") @db.Uuid
+  status          String   @default("applied") @db.VarChar(50) // applied, rejected, viewed, shortlisted, etc.
+  appliedAt       DateTime @default(now()) @map("applied_at")
+  generatedEmail  String?  @map("generated_email") @db.Text
+  generatedLetter String?  @map("generated_letter") @db.Text
+  customNotes     String?  @map("custom_notes") @db.Text
+  archivedAt      DateTime? @map("archived_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, candidateId])
+  @@map("job_applications")
 }
 
 model Role {

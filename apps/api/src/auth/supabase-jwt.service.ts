@@ -1,6 +1,14 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { createRemoteJWKSet, jwtVerify, type JWTPayload, type JWTVerifyOptions } from 'jose';
+import {
+  createRemoteJWKSet,
+  jwtVerify,
+  type JWTPayload,
+  type JWTVerifyOptions,
+} from 'jose';
 import { prisma, AccountType } from '@aegishire/db';
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export type SupabaseJwtPayload = JWTPayload & {
   id: string;
@@ -114,9 +122,13 @@ export class SupabaseJwtService {
       throw new UnauthorizedException('Token subject is missing');
     }
 
-    // get the rest of the user info from the profile table 
+    if (!UUID_PATTERN.test(subject)) {
+      throw new UnauthorizedException('Token subject must be a valid user ID');
+    }
+
+    // get the rest of the user info from the profile table
     const profile = await prisma.profile.findUnique({
-      where: { userId: subject }
+      where: { userId: subject },
     });
 
     return {
