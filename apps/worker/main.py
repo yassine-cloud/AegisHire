@@ -16,9 +16,11 @@ from config import get_settings
 from matching.gap_report_agent import GapReportGenerationError, generate_gap_report
 from matching.comparison_agent import compare_candidate_to_role, ComparisonResult
 from matching.explanation_agent import generate_match_explanation, ExplanationResult, MatchScoreExplanationError
+from matching.job_parser_agent import JobParsingError, parse_external_job
 from matching.schemas import (
     GapReportResult, GenerateReportRequest, 
-    CompareRoleRequest, ExplainMatchScoreRequest
+    CompareRoleRequest, ExplainMatchScoreRequest,
+    GenerateReportDirectRequest, ParsedJob, ParseJobRequest
 )
 
 # Configure logging
@@ -286,6 +288,68 @@ async def generate_report(payload: GenerateReportRequest) -> GapReportResult:
         raise HTTPException(
             status_code=500,
             detail=f"Unexpected error: {str(exc)}"
+        ) from exc
+
+
+@app.post("/worker/generate-report/direct", response_model=GapReportResult)
+async def generate_report_direct(payload: GenerateReportDirectRequest) -> GapReportResult:
+    """Generate a gap report from in-memory missing skills without DB role lookup."""
+
+    logger.info(
+        "Received direct gap report request: candidate_id=%s, role_title=%s",
+        payload.candidate_id,
+        payload.role_title,
+    )
+
+    missing_skills = [item.model_dump() for item in payload.missing_skills]
+    if not missing_skills:
+        return GapReportResult(gaps=[], overall_priority_order=[])
+
+    try:
+        result = await run_in_threadpool(
+            generate_gap_report,
+            payload.candidate_id,
+            payload.role_id,
+            missing_skills,
+            payload.role_title,
+        )
+        return result
+    except GapReportGenerationError as exc:
+        logger.error("Direct gap report generation failed: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Gap report generation failed: {str(exc)}",
+        ) from exc
+    except Exception as exc:
+        logger.error("Unexpected error during direct gap report: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Unexpected error: {str(exc)}",
+        ) from exc
+
+
+@app.post("/worker/parse-external-job", response_model=ParsedJob)
+async def parse_external_job_description(payload: ParseJobRequest) -> ParsedJob:
+    """Parse raw external job text into a transient structured job."""
+
+    logger.info("Received external job parse request for company=%s", payload.companyName)
+    try:
+        return await run_in_threadpool(
+            parse_external_job,
+            payload.companyName,
+            payload.jobDescription,
+        )
+    except JobParsingError as exc:
+        logger.error("External job parsing failed: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"External job parsing failed: {str(exc)}",
+        ) from exc
+    except Exception as exc:
+        logger.error("Unexpected error during external job parsing: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Unexpected error: {str(exc)}",
         ) from exc
 
 
