@@ -2,7 +2,7 @@ services:
   nginx:
     image: nginx:1.27-alpine
     ports:
-      - "80:80"
+      - "8080:80"
     volumes:
       - ./infra/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
@@ -13,6 +13,9 @@ services:
       worker:
         condition: service_started
     restart: unless-stopped
+    networks:
+      - aegis_network
+      - my_network
 
   redis:
     image: redis:7-alpine
@@ -24,6 +27,9 @@ services:
       timeout: 3s
       retries: 5
     restart: unless-stopped
+    networks:
+      - aegis_network
+      - my_network
 
   neo4j:
     image: neo4j:5.26-community
@@ -37,6 +43,9 @@ services:
       NEO4J_server_memory_heap_max__size: 512M
     volumes:
       - neo4j_data:/data
+    networks:
+      - aegis_network
+      - my_network
     restart: unless-stopped
 
   api:
@@ -58,6 +67,9 @@ services:
         condition: service_healthy
       worker:
         condition: service_started
+    networks:
+      - aegis_network
+      - my_network
     restart: unless-stopped
 
   frontend:
@@ -81,6 +93,9 @@ services:
     depends_on:
       api:
         condition: service_started
+    networks:
+      - aegis_network
+      - my_network
     restart: unless-stopped
 
   worker:
@@ -106,6 +121,16 @@ services:
       neo4j:
         condition: service_started
     restart: unless-stopped
+    networks:
+      - aegis_network
+      - my_network
 
 volumes:
   neo4j_data:
+
+
+networks:
+  aegis_network:
+    driver: bridge
+  my_network:
+    external: true
