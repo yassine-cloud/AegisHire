@@ -4,7 +4,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 
-import { Search } from "lucide-react";
 import { JobCard } from "@/components/JobCard";
 
 import { BriefcaseBusiness, Building2, CalendarDays, MapPin, Search, Sparkles } from "lucide-react";

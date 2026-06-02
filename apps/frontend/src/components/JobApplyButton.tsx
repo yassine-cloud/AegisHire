@@ -14,7 +14,7 @@ interface JobApplyButtonProps {
   companyName: string;
   jobDescription: string;
   companyIndustry?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'default' | 'lg';
   className?: string;
 }
 
@@ -24,11 +24,11 @@ export function JobApplyButton({
   companyName,
   jobDescription,
   companyIndustry,
-  size = 'md',
+  size = 'default',
   className,
 }: JobApplyButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isChecking, setIsChecking] = useState(true);
+  const [isChecking, setIsChecking] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
   const { toast } = useToast();
 
@@ -47,7 +47,8 @@ export function JobApplyButton({
   }, [jobId]);
 
   useEffect(() => {
-    void Promise.resolve().then(checkIfApplied);
+    setIsChecking(true);
+    void checkIfApplied();
   }, [checkIfApplied]);
 
   const handleApplicationSubmitted = () => {

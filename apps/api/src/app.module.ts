@@ -14,6 +14,7 @@ import { GraphSkillModule } from './graph-skill/graph-skill.module';
 import { AIGenerationModule } from './ai-generation/ai-generation.module';
 import { JobApplicationsModule } from './job-applications/job-applications.module';
 import { ExternalJobsModule } from './external-jobs/external-jobs.module';
+import { AtsModule } from './ats/ats.module';
 
 
 @Module({
@@ -33,6 +34,7 @@ import { ExternalJobsModule } from './external-jobs/external-jobs.module';
     AIGenerationModule,
     JobApplicationsModule,
     ExternalJobsModule,
+    AtsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

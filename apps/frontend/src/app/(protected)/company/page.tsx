@@ -10,9 +10,11 @@ export const metadata = {
 export default async function CompanyPage() {
   const companyResponse = await apiFetchServer("/companies/me");
 
-  const company = companyResponse.ok ? await companyResponse.json() : null;
+  const companyText = companyResponse.ok ? await companyResponse.text() : null;
+  const company = companyText?.trim() ? JSON.parse(companyText) : null;
   const jobsResponse = company ? await apiFetchServer("/companies/me/jobs") : null;
-  const jobs = jobsResponse?.ok ? await jobsResponse.json() : [];
+  const jobsText = jobsResponse?.ok ? await jobsResponse.text() : null;
+  const jobs = jobsText?.trim() ? JSON.parse(jobsText) : [];
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">

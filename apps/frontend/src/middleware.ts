@@ -5,8 +5,8 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3
 
 const roleRouteMap: Record<string, string[]> = {
   developer: ['/profile', '/jobs', '/test-gap-report'],
-  company: ['/profile', '/company', '/test-gap-report'],
-  admin: ['/profile', '/admin', '/test-gap-report'],
+  company: ['/profile', '/company', '/test-gap-report', '/dashboard'],
+  admin: ['/profile', '/admin', '/test-gap-report', '/dashboard'],
 }
 
 const defaultRouteByRole: Record<string, string> = {

@@ -1,3 +1,53 @@
+apps/api/src/app.controller.spec.ts
+apps/api/src/app.controller.ts
+apps/api/src/app.service.ts
+apps/api/src/auth/current-user.decorator.ts
+apps/api/src/auth/email-verified.guard.ts
+apps/api/src/auth/supabase-auth.guard.ts
+apps/api/src/auth/admin-access.service.ts
+apps/api/src/auth/admin.guard.ts
+apps/api/src/auth/auth.module.ts
+apps/api/src/auth/supabase-jwt.service.ts
+apps/api/src/profile/dto/create-profile.dto.ts
+apps/api/src/profile/dto/update-profile.dto.ts
+apps/api/src/profile/entities/profile.entity.ts
+apps/api/src/profile/profile.controller.spec.ts
+apps/api/src/profile/profile.module.ts
+apps/api/src/profile/profile.controller.ts
+apps/api/src/profile/profile.service.spec.ts
+apps/api/src/profile/profile.service.ts
+apps/api/src/config/env.validation.ts
+apps/api/src/github-analysis/github-analysis.controller.ts
+apps/api/src/github-analysis/github-analysis.module.ts
+apps/api/src/github-analysis/github-analysis.service.ts
+apps/api/src/main.ts
+apps/api/src/roles/dto/test-setup.dto.ts
+apps/api/src/roles/dto/gap-report.dto.ts
+apps/api/src/roles/dto/test-setup-request.dto.ts
+apps/api/src/roles/roles.module.ts
+apps/api/src/roles/roles.controller.spec.ts
+apps/api/src/roles/roles.service.spec.ts
+apps/api/src/roles/roles.controller.ts
+apps/api/src/roles/roles.service.ts
+apps/api/src/scripts/seed-test-role.ts
+apps/api/src/shared/redis/redis.module.ts
+apps/api/src/shared/redis/redis.service.ts
+apps/api/src/graph-skill/dto/rebuild-graph.dto.ts
+apps/api/src/graph-skill/graph-skill.controller.ts
+apps/api/src/graph-skill/graph-skill.module.ts
+apps/api/src/graph-skill/graph-skill.service.ts
+apps/api/src/admin/admin.controller.ts
+apps/api/src/admin/admin.module.ts
+apps/api/src/admin/admin.service.ts
+apps/api/src/admin/dto/create-admin-account.dto.ts
+apps/api/src/admin/dto/update-admin-account.dto.ts
+apps/api/src/companies/companies.controller.ts
+apps/api/src/companies/companies.module.ts
+apps/api/src/companies/companies.service.ts
+apps/api/src/companies/dto/create-company-credentials.dto.ts
+apps/api/src/companies/dto/create-job.dto.ts
+apps/api/src/companies/dto/update-job.dto.ts
+apps/api/src/companies/dto/upsert-company.dto.ts
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
@@ -43,13 +93,6 @@ enum AccountType {
   developer @map("developer")
   company   @map("company")
   admin     @map("admin")
-}
-
-enum ApplicationStatus {
-  PENDING  @map("PENDING")
-  REVIEW   @map("REVIEW")
-  ACCEPTED @map("ACCEPTED")
-  REJECTED @map("REJECTED")
 }
 
 model Profile {
@@ -105,56 +148,9 @@ model Job {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  company         Company          @relation(fields: [companyId], references: [id])
-  applications    Application[]
-  jobApplications JobApplication[]
+  company Company @relation(fields: [companyId], references: [id])
 
   @@map("jobs")
-}
-
-model Application {
-  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  candidateId String            @map("candidate_id") @db.Uuid
-  jobId       String            @map("job_id") @db.Uuid
-  status      ApplicationStatus @default(PENDING) @map("status")
-  createdAt   DateTime          @default(now()) @map("created_at")
-  updatedAt   DateTime          @updatedAt @map("updated_at")
-
-  job Job @relation(fields: [jobId], references: [id])
-
-  @@unique([candidateId, jobId])
-  @@map("applications")
-}
-
-model AuditLog {
-  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  candidateId String            @map("candidate_id") @db.Uuid
-  jobId       String            @map("job_id") @db.Uuid
-  fromStatus  ApplicationStatus @map("from_status")
-  toStatus    ApplicationStatus @map("to_status")
-  changedAt   DateTime          @default(now()) @map("changed_at")
-
-  @@index([candidateId])
-  @@map("audit_logs")
-}
-
-model JobApplication {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  jobId           String    @map("job_id") @db.Uuid
-  candidateId     String    @map("candidate_id") @db.Uuid
-  status          String    @default("applied") @db.VarChar(50)
-  appliedAt       DateTime  @default(now()) @map("applied_at")
-  generatedEmail  String?   @map("generated_email") @db.Text
-  generatedLetter String?   @map("generated_letter") @db.Text
-  customNotes     String?   @map("custom_notes") @db.Text
-  archivedAt      DateTime? @map("archived_at")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
-
-  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
-
-  @@unique([jobId, candidateId])
-  @@map("job_applications")
 }
 
 model Role {
