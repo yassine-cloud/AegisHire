@@ -1,15 +1,22 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { LayoutDashboard } from "lucide-react";
 import ATSMetricsCards from "@/components/ats/ATSMetricsCards";
 import CandidatePipelineBoard from "@/components/ats/CandidatePipelineBoard";
 import CandidatePreviewModal from "@/components/ats/CandidatePreviewModal";
 import type { Candidate, ApplicationStatus } from "@/components/ats/types";
-import { MOCK_CANDIDATES } from "@/components/ats/types";
+import { apiFetchClient } from "@/lib/api.client";
 
 export default function ATSDashboardPage() {
-  const [candidates, setCandidates] = useState<Candidate[]>(MOCK_CANDIDATES);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+
+  useEffect(() => {
+    apiFetchClient("/ats/candidates")
+      .then((res) => (res.ok ? (res.json() as Promise<Candidate[]>) : Promise.resolve([])))
+      .then((data) => setCandidates(data))
+      .catch(() => setCandidates([]));
+  }, []);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
 
   const handleStageChange = useCallback(
