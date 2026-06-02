@@ -64,10 +64,15 @@ export function ProfileDashboardShell({
   candidateName,
   isNewProfile,
   profileData,
+  initialData,
 }: {
   candidateName: string;
   isNewProfile: boolean;
   profileData: ProfileData | null;
+  initialData: {
+    displayName: string;
+    email: string;
+  };
 }) {
   const [activeSection, setActiveSection] = useState<SectionId>("dashboard");
   const hasProfile = Boolean(profileData && !isNewProfile);
@@ -228,6 +233,8 @@ export function ProfileDashboardShell({
                         githubUsername: profileData?.githubUsername,
                         resumeFileUrl: profileData?.resumeFileUrl,
                         skills: profileData?.skills ?? null,
+                        displayName: initialData.displayName,
+                        email: initialData.email,
                       }}
                       isNew={isNewProfile}
                     />
@@ -308,6 +315,8 @@ export function ProfileDashboardShell({
                       githubUsername: profileData?.githubUsername,
                       resumeFileUrl: profileData?.resumeFileUrl,
                       skills: profileData?.skills ?? null,
+                      displayName: initialData.displayName,
+                      email: initialData.email,
                     }}
                     isNew={isNewProfile}
                   />

@@ -45,6 +45,10 @@ export default async function ProfilePage() {
           ...profileData,
           userId: user?.id,
         }}
+        initialData={{
+            displayName: user?.user_metadata?.display_name ?? user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "",
+            email: user?.email ?? "",
+          }}
       />
     );
   }
