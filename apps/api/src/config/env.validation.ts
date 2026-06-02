@@ -16,7 +16,11 @@ export const envValidationSchema = Joi.object({
   SUPABASE_JWT_AUDIENCE: Joi.string().optional().allow(''),
   SUPABASE_JWT_SECRET: Joi.string().optional().allow(''),
   SUPABASE_SERVICE_ROLE_KEY: Joi.string().optional().allow(''),
-  API_BASE_URL: Joi.string().uri({ scheme: ['http', 'https'] }).optional(),
+  GROQ_API_KEY: Joi.string().optional().allow(''),
+  GROQ_MODEL: Joi.string().optional().allow(''),
+  API_BASE_URL: Joi.string()
+    .uri({ scheme: ['http', 'https'] })
+    .optional(),
   NODE_ENV: Joi.string().valid('development', 'production', 'test').optional(),
   PORT: Joi.number().port().optional(),
 }).unknown(true);

@@ -1,0 +1,61 @@
+### Generate Email and Motivation Letter using GROQ AI
+### Make sure GROQ_API_KEY is set in .env file
+
+@api_url = http://localhost:3001
+@authToken = your-supabase-jwt-token
+
+### Generate both email and motivation letter
+POST {{api_url}}/ai-generation/generate-application
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "userName": "John Doe",
+  "userEmail": "john.doe@example.com",
+  "userPhone": "+1 (555) 123-4567",
+  "userLinkedIn": "https://linkedin.com/in/johndoe",
+  "userBackground": "Senior Software Engineer with 8+ years of experience in full-stack development, cloud architecture, and team leadership. Passionate about building scalable systems and mentoring junior developers.",
+  "jobTitle": "Senior Software Engineer",
+  "jobDescription": "We are looking for a Senior Software Engineer to join our team. You will work on our core platform handling millions of requests per day. Requirements: 5+ years of experience, proficiency in Node.js/Python, AWS/GCP experience, strong understanding of databases and distributed systems.",
+  "companyName": "TechCorp Inc.",
+  "companyIndustry": "Cloud Infrastructure",
+  "draftContent": "I am very interested in this position. I have worked with Node.js extensively and have deployed applications on AWS. I enjoy working with teams and solving complex problems.",
+  "applicationType": "both",
+  "tone": "professional"
+}
+
+### Generate only email
+POST {{api_url}}/ai-generation/generate-application
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "userName": "Jane Smith",
+  "userEmail": "jane.smith@example.com",
+  "userPhone": "+1 (555) 987-6543",
+  "jobTitle": "Product Manager",
+  "jobDescription": "Looking for a Product Manager with experience in SaaS products, user research, and cross-functional collaboration. Experience with agile methodologies preferred.",
+  "companyName": "StartupXYZ",
+  "companyIndustry": "SaaS",
+  "draftContent": "I have managed 3 SaaS products from concept to launch. I love talking to customers and understanding their needs.",
+  "applicationType": "email",
+  "tone": "professional"
+}
+
+### Generate only motivation letter
+POST {{api_url}}/ai-generation/generate-application
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "userName": "Alex Johnson",
+  "userEmail": "alex.j@example.com",
+  "userBackground": "Full-stack developer with passion for DevOps and infrastructure automation",
+  "jobTitle": "DevOps Engineer",
+  "jobDescription": "We need a DevOps engineer to manage our Kubernetes clusters, CI/CD pipelines, and cloud infrastructure. Docker, Kubernetes, and Terraform experience required.",
+  "companyName": "CloudSystems Corp",
+  "companyIndustry": "Cloud Services",
+  "draftContent": "I have been using Docker and Kubernetes for the past 3 years. I set up CI/CD pipelines using GitHub Actions and GitLab CI. I am proficient with Terraform and AWS.",
+  "applicationType": "motivation-letter",
+  "tone": "professional"
+}

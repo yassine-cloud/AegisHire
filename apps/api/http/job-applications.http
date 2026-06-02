@@ -1,0 +1,89 @@
+### Job Applications API Tests
+### Make sure you are authenticated with a valid JWT token
+
+@api_url = http://localhost:3001
+@authToken = your-supabase-jwt-token
+
+### Create a job application (without AI content)
+POST {{api_url}}/job-applications
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "jobId": "your-job-uuid",
+  "customNotes": "I am very interested in this position"
+}
+
+### Create a job application (with AI generated content)
+POST {{api_url}}/job-applications
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "jobId": "your-job-uuid",
+  "generatedEmail": "Subject: Application for Senior Developer\n\nDear Hiring Manager,\n\nI am writing to express my interest in the Senior Developer position...",
+  "generatedLetter": "Dear [Company Name],\n\nI am excited to apply for the Senior Developer position at your organization...",
+  "customNotes": "Applied via AI assistant"
+}
+
+### Get all user applications
+GET {{api_url}}/job-applications
+Authorization: Bearer {{authToken}}
+
+### Get application details
+GET {{api_url}}/job-applications/your-application-uuid
+Authorization: Bearer {{authToken}}
+
+### Check if user already applied to a job
+GET {{api_url}}/job-applications/job/your-job-uuid/check
+Authorization: Bearer {{authToken}}
+
+### Update application (e.g., add notes or change status)
+PATCH {{api_url}}/job-applications/your-application-uuid
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "status": "viewed",
+  "customNotes": "Updated notes after interview feedback"
+}
+
+### Delete/archive application
+DELETE {{api_url}}/job-applications/your-application-uuid
+Authorization: Bearer {{authToken}}
+
+### Expected Response Examples
+
+# Success creating application:
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "jobId": "650e8400-e29b-41d4-a716-446655440001",
+  "candidateId": "750e8400-e29b-41d4-a716-446655440002",
+  "status": "applied",
+  "appliedAt": "2026-06-01T10:30:00.000Z",
+  "generatedEmail": "...",
+  "generatedLetter": "...",
+  "customNotes": null,
+  "archivedAt": null,
+  "createdAt": "2026-06-01T10:30:00.000Z",
+  "updatedAt": "2026-06-01T10:30:00.000Z"
+}
+
+# Error - Already applied:
+{
+  "statusCode": 400,
+  "message": "You have already applied to this job",
+  "error": "Bad Request"
+}
+
+# Error - Job not found:
+{
+  "statusCode": 404,
+  "message": "Job not found",
+  "error": "Not Found"
+}
+
+# Check applied response:
+{
+  "applied": true
+}
