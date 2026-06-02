@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { PointerEvent, useEffect, useMemo, useState } from "react";
 import { AlertCircle, Network, RefreshCw } from "lucide-react";
 import { apiFetchClient } from "@/lib/api.client";
 import { Badge } from "@/components/ui/badge";
@@ -426,7 +426,8 @@ export function SkillGraphVisualization({
                           event.currentTarget.setPointerCapture(event.pointerId);
                           setDraggingNodeId(node.id);
                         }}
-                        title={node.type === "Skill" && node.confidence != null ? `${node.label}: ${(confidence * 100).toFixed(0)}% confidence` : node.label}
+                        // Changed to a valid data- attribute
+                        data-title={node.type === "Skill" && node.confidence != null ? `${node.label}: ${(node.confidence * 100).toFixed(0)}% confidence` : node.label}
                         style={{ cursor: draggingNodeId === node.id ? "grabbing" : "grab" }}
                       >
                         <circle
