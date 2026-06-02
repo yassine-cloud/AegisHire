@@ -1,0 +1,802 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Interviewer Test Harness</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f7f9;
+        --panel: #ffffff;
+        --panel-2: #eef3f5;
+        --text: #172026;
+        --muted: #5d6872;
+        --border: #d9e0e5;
+        --accent: #0f766e;
+        --accent-dark: #115e59;
+        --danger: #b42318;
+        --shadow: 0 18px 50px rgba(23, 32, 38, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        letter-spacing: 0;
+      }
+
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+
+      button {
+        border: 1px solid transparent;
+        border-radius: 6px;
+        min-height: 40px;
+        padding: 0 14px;
+        cursor: pointer;
+        background: var(--accent);
+        color: white;
+        font-weight: 650;
+      }
+
+      button:hover {
+        background: var(--accent-dark);
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+
+      button.secondary {
+        background: var(--panel);
+        border-color: var(--border);
+        color: var(--text);
+      }
+
+      button.secondary:hover {
+        background: var(--panel-2);
+      }
+
+      button.danger {
+        background: var(--danger);
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: white;
+        color: var(--text);
+        padding: 10px 11px;
+        outline: none;
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 96px;
+        line-height: 1.45;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+      }
+
+      .shell {
+        width: min(1180px, calc(100vw - 32px));
+        margin: 0 auto;
+        padding: 28px 0;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+
+      .title {
+        display: grid;
+        gap: 4px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: clamp(24px, 3vw, 34px);
+        line-height: 1.1;
+      }
+
+      .subtitle {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: white;
+        padding: 8px 12px;
+        color: var(--muted);
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #98a2b3;
+      }
+
+      .dot.active {
+        background: #12b76a;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(300px, 420px) minmax(0, 1fr);
+        gap: 18px;
+        align-items: start;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+      }
+
+      .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border-bottom: 1px solid var(--border);
+        padding: 16px;
+      }
+
+      .panel-header h2 {
+        font-size: 16px;
+      }
+
+      .panel-body {
+        display: grid;
+        gap: 14px;
+        padding: 16px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 120px;
+        gap: 12px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .voice-panel {
+        display: none;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fbfcfd;
+        padding: 14px;
+        gap: 12px;
+      }
+
+      .voice-panel.active {
+        display: grid;
+      }
+
+      .voice-copy {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .question-box {
+        display: grid;
+        gap: 14px;
+      }
+
+      .question-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .pill {
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--panel-2);
+        color: var(--muted);
+        padding: 5px 9px;
+        font-size: 12px;
+        font-weight: 650;
+      }
+
+      .question-text {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fbfcfd;
+        min-height: 132px;
+        padding: 18px;
+        font-size: 19px;
+        line-height: 1.45;
+      }
+
+      .empty {
+        color: var(--muted);
+      }
+
+      .transcript {
+        display: grid;
+        gap: 10px;
+        max-height: 340px;
+        overflow: auto;
+        padding-right: 4px;
+      }
+
+      .entry {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fbfcfd;
+        padding: 12px;
+      }
+
+      .entry strong {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 13px;
+      }
+
+      .summary {
+        white-space: pre-wrap;
+        color: var(--text);
+        line-height: 1.45;
+      }
+
+      .error {
+        color: var(--danger);
+        font-size: 13px;
+        min-height: 18px;
+      }
+
+      @media (max-width: 840px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        .topbar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div class="title">
+          <h1>Interviewer Test Harness</h1>
+          <p class="subtitle">Standalone local runner for question generation, answers, and summary.</p>
+        </div>
+        <div class="status" aria-live="polite">
+          <span id="statusDot" class="dot"></span>
+          <span id="statusText">Idle</span>
+        </div>
+      </header>
+
+      <section class="layout">
+        <form id="startForm" class="panel">
+          <div class="panel-header">
+            <h2>Session Setup</h2>
+            <button id="loadContextBtn" class="secondary" type="button">Load Context</button>
+          </div>
+          <div class="panel-body">
+            <label>
+              Job title
+              <input id="jobTitle" required value="Senior Full-Stack Engineer" />
+            </label>
+            <label>
+              Job description
+              <textarea id="jobDescription" required>Build microservices with React, Node.js, NestJS, PostgreSQL, and Redis.</textarea>
+            </label>
+            <label>
+              Required skills
+              <input id="skills" value="React, Next.js, Node.js, NestJS, PostgreSQL, Redis" />
+            </label>
+            <div class="row">
+              <label>
+                User ID
+                <input id="userId" value="local-test-user" />
+              </label>
+              <label>
+                Time
+                <input id="timeSeconds" type="number" min="10" step="5" value="60" />
+              </label>
+            </div>
+            <label>
+              Mode
+              <select id="mode">
+                <option value="text">Text chat</option>
+                <option value="live">Live voice</option>
+              </select>
+            </label>
+            <div class="actions">
+              <button id="startBtn" type="submit">Start</button>
+              <button id="resetBtn" class="secondary" type="button">Reset</button>
+            </div>
+            <div id="formError" class="error" aria-live="polite"></div>
+          </div>
+        </form>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h2>Interview</h2>
+            <div class="question-meta">
+              <span id="sessionPill" class="pill">No session</span>
+              <span id="timerPill" class="pill">-- sec</span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="question-box">
+              <div id="questionText" class="question-text empty">Start a session to fetch the first question.</div>
+              <div id="voicePanel" class="voice-panel">
+                <div class="actions">
+                  <button id="replayBtn" class="secondary" type="button" disabled>Replay Question</button>
+                  <button id="voiceBtn" type="button" disabled>Answer by Voice</button>
+                </div>
+                <p id="voiceSupport" class="voice-copy">Voice mode uses your browser microphone and speaker.</p>
+                <div id="voiceError" class="error" aria-live="polite"></div>
+              </div>
+              <label>
+                Candidate answer
+                <textarea id="answerText" placeholder="Type the candidate answer here..." disabled></textarea>
+              </label>
+              <div class="actions">
+                <button id="submitBtn" type="button" disabled>Submit Answer</button>
+                <button id="nextBtn" class="secondary" type="button" disabled>Next Question</button>
+                <button id="stopBtn" class="danger" type="button" disabled>Stop</button>
+              </div>
+              <div id="interviewError" class="error" aria-live="polite"></div>
+            </div>
+
+            <section>
+              <div class="panel-header" style="padding-left: 0; padding-right: 0; border-bottom: 0">
+                <h3>Transcript</h3>
+              </div>
+              <div id="transcript" class="transcript">
+                <p class="empty">No answers yet.</p>
+              </div>
+            </section>
+
+            <section>
+              <div class="panel-header" style="padding-left: 0; padding-right: 0; border-bottom: 0">
+                <h3>Summary</h3>
+              </div>
+              <div id="summary" class="summary empty">Stop the session to generate a summary.</div>
+            </section>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script>
+      const state = {
+        sessionId: null,
+        currentQuestion: null,
+        transcript: [],
+        listening: false,
+        recognition: null,
+        finalSpeech: "",
+      };
+
+      const $ = (id) => document.getElementById(id);
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const speechSupported = Boolean(SpeechRecognition && window.speechSynthesis);
+
+      const setStatus = (text, active = false) => {
+        $("statusText").textContent = text;
+        $("statusDot").classList.toggle("active", active);
+      };
+
+      const setBusy = (busy) => {
+        $("startBtn").disabled = busy;
+        $("loadContextBtn").disabled = busy;
+        $("submitBtn").disabled = busy || !state.currentQuestion;
+        $("nextBtn").disabled = busy || !state.sessionId;
+        $("stopBtn").disabled = busy || !state.sessionId;
+        $("replayBtn").disabled = busy || !state.currentQuestion;
+        $("voiceBtn").disabled = busy || !state.currentQuestion || !SpeechRecognition;
+      };
+
+      const requestJson = async (url, options = {}) => {
+        const response = await fetch(url, {
+          headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+          ...options,
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          const detail = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail || data);
+          throw new Error(detail || `Request failed with ${response.status}`);
+        }
+        return data;
+      };
+
+      const renderSession = () => {
+        $("sessionPill").textContent = state.sessionId ? `Session ${state.sessionId.slice(0, 8)}` : "No session";
+        $("answerText").disabled = !state.currentQuestion;
+        $("submitBtn").disabled = !state.currentQuestion;
+        $("nextBtn").disabled = !state.sessionId;
+        $("stopBtn").disabled = !state.sessionId;
+        $("replayBtn").disabled = !state.currentQuestion;
+        $("voiceBtn").disabled = !state.currentQuestion || !SpeechRecognition;
+      };
+
+      const renderQuestion = (question) => {
+        state.currentQuestion = question;
+        if (!question) {
+          $("questionText").textContent = "No active question.";
+          $("questionText").classList.add("empty");
+          $("timerPill").textContent = "-- sec";
+          renderSession();
+          return;
+        }
+
+        $("questionText").textContent = question.text;
+        $("questionText").classList.remove("empty");
+        $("timerPill").textContent = `${question.time_seconds} sec`;
+        $("answerText").value = "";
+        $("answerText").focus();
+        renderSession();
+        if ($("mode").value === "live") {
+          speakQuestion(question.text);
+        }
+      };
+
+      const renderVoiceMode = () => {
+        const isLive = $("mode").value === "live";
+        $("voicePanel").classList.toggle("active", isLive);
+        $("voiceSupport").textContent = speechSupported
+          ? "Voice mode reads the question aloud and transcribes your spoken answer into the answer box."
+          : "Voice mode needs a browser with speech recognition support, such as Chrome or Edge.";
+      };
+
+      const speakQuestion = (text) => {
+        if (!window.speechSynthesis) {
+          $("voiceError").textContent = "Speech output is not supported in this browser.";
+          return;
+        }
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = "en-US";
+        utterance.rate = 0.95;
+        window.speechSynthesis.speak(utterance);
+        $("voiceError").textContent = "";
+      };
+
+      const startVoiceAnswer = () => {
+        if (!SpeechRecognition) {
+          $("voiceError").textContent = "Speech recognition is not supported in this browser. Try Chrome or Edge.";
+          return;
+        }
+
+        state.recognition?.abort();
+        state.finalSpeech = $("answerText").value.trim() ? `${$("answerText").value.trim()} ` : "";
+
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = "en-US";
+
+        recognition.onresult = (event) => {
+          let interim = "";
+          let finalText = state.finalSpeech;
+
+          for (let index = event.resultIndex; index < event.results.length; index += 1) {
+            const transcript = event.results[index][0]?.transcript || "";
+            if (!transcript) continue;
+            if (event.results[index].isFinal) {
+              finalText += `${transcript.trim()} `;
+            } else {
+              interim += transcript;
+            }
+          }
+
+          state.finalSpeech = finalText;
+          $("answerText").value = `${finalText}${interim}`.trim();
+        };
+
+        recognition.onerror = (event) => {
+          $("voiceError").textContent = `Voice capture failed: ${event.error}`;
+          state.listening = false;
+          $("voiceBtn").textContent = "Answer by Voice";
+        };
+
+        recognition.onend = () => {
+          state.listening = false;
+          $("voiceBtn").textContent = "Answer by Voice";
+        };
+
+        state.recognition = recognition;
+        state.listening = true;
+        $("voiceBtn").textContent = "Stop Listening";
+        $("voiceError").textContent = "";
+        recognition.start();
+      };
+
+      const stopVoiceAnswer = () => {
+        state.recognition?.stop();
+        state.listening = false;
+        $("voiceBtn").textContent = "Answer by Voice";
+      };
+
+      const renderTranscript = () => {
+        const transcript = $("transcript");
+        if (!state.transcript.length) {
+          transcript.innerHTML = '<p class="empty">No answers yet.</p>';
+          return;
+        }
+
+        transcript.innerHTML = state.transcript
+          .map(
+            (item) => {
+              if (typeof item === "string") {
+                const [speaker, ...textParts] = item.split(":");
+                return `
+                  <article class="entry">
+                    <strong>${escapeHtml(speaker || "Transcript")}</strong>
+                    <div>${escapeHtml(textParts.join(":").trim() || item)}</div>
+                  </article>
+                `;
+              }
+
+              return `
+                <article class="entry">
+                  <strong>${escapeHtml(item.questionId)}</strong>
+                  <div>${escapeHtml(item.answer)}</div>
+                </article>
+              `;
+            },
+          )
+          .join("");
+      };
+
+      const escapeHtml = (value) =>
+        value.replace(/[&<>"']/g, (char) =>
+          ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[char],
+        );
+
+      const resetUi = () => {
+        state.sessionId = null;
+        state.currentQuestion = null;
+        state.transcript = [];
+        stopVoiceAnswer();
+        $("formError").textContent = "";
+        $("interviewError").textContent = "";
+        $("voiceError").textContent = "";
+        $("summary").textContent = "Stop the session to generate a summary.";
+        $("summary").classList.add("empty");
+        renderQuestion(null);
+        renderTranscript();
+        setStatus("Idle", false);
+      };
+
+      const getNextQuestion = async () => {
+        $("interviewError").textContent = "";
+        setBusy(true);
+        setStatus("Fetching question", true);
+        try {
+          const data = await requestJson(`/interview/${state.sessionId}/question`, { method: "POST" });
+          renderQuestion(data.question);
+          setStatus("Question ready", true);
+        } catch (error) {
+          renderQuestion(null);
+          $("interviewError").textContent = error.message === "NO_MORE_QUESTIONS" ? "No more questions." : error.message;
+          setStatus("Waiting", Boolean(state.sessionId));
+        } finally {
+          setBusy(false);
+          renderSession();
+        }
+      };
+
+      $("startForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        $("formError").textContent = "";
+        $("summary").textContent = "Stop the session to generate a summary.";
+        $("summary").classList.add("empty");
+        state.transcript = [];
+        renderTranscript();
+        setBusy(true);
+        setStatus("Starting session", true);
+
+        const payload = {
+          job_title: $("jobTitle").value.trim(),
+          job_description: $("jobDescription").value.trim(),
+          required_skills: $("skills").value.split(",").map((skill) => skill.trim()).filter(Boolean),
+          mode: $("mode").value,
+          default_question_time_seconds: Number($("timeSeconds").value || 60),
+          user_id: $("userId").value.trim() || null,
+        };
+
+        try {
+          const data = await requestJson("/interview/start", {
+            method: "POST",
+            body: JSON.stringify(payload),
+          });
+          state.sessionId = data.session_id;
+          renderSession();
+          await getNextQuestion();
+        } catch (error) {
+          $("formError").textContent = error.message;
+          setStatus("Start failed", false);
+        } finally {
+          setBusy(false);
+          renderSession();
+        }
+      });
+
+      $("submitBtn").addEventListener("click", async () => {
+        if (!state.sessionId || !state.currentQuestion) return;
+        stopVoiceAnswer();
+        $("interviewError").textContent = "";
+        const answer = $("answerText").value.trim();
+        setBusy(true);
+        setStatus("Submitting answer", true);
+
+        try {
+          const data = await requestJson(`/interview/${state.sessionId}/answer`, {
+            method: "POST",
+            body: JSON.stringify({
+              question_id: state.currentQuestion.id,
+              answer_text: answer,
+            }),
+          });
+
+          if (data.transcript) {
+            state.transcript = data.transcript;
+          } else {
+            state.transcript.push({ questionId: state.currentQuestion.id, answer });
+          }
+          renderTranscript();
+          if (data.summary !== undefined) {
+            $("summary").textContent = data.summary || "No summary returned.";
+            $("summary").classList.remove("empty");
+          }
+          if (data.end_reason) {
+            renderQuestion(null);
+            state.sessionId = null;
+            setStatus(data.end_reason === "NOT_SERIOUS" ? "Interview restricted" : "Interview complete", false);
+            $("interviewError").textContent =
+              data.end_reason === "NOT_SERIOUS"
+                ? "The interviewer flagged this session as non-serious."
+                : data.message || "Interview complete.";
+          } else if (data.question) {
+            renderQuestion(data.question);
+            setStatus("Follow-up loaded", true);
+          } else {
+            await getNextQuestion();
+          }
+        } catch (error) {
+          $("interviewError").textContent = error.message;
+          setStatus("Submit failed", true);
+        } finally {
+          setBusy(false);
+          renderSession();
+        }
+      });
+
+      $("nextBtn").addEventListener("click", getNextQuestion);
+
+      $("replayBtn").addEventListener("click", () => {
+        if (state.currentQuestion) {
+          speakQuestion(state.currentQuestion.text);
+        }
+      });
+
+      $("voiceBtn").addEventListener("click", () => {
+        if (state.listening) {
+          stopVoiceAnswer();
+        } else {
+          startVoiceAnswer();
+        }
+      });
+
+      $("mode").addEventListener("change", renderVoiceMode);
+
+      $("stopBtn").addEventListener("click", async () => {
+        if (!state.sessionId) return;
+        stopVoiceAnswer();
+        $("interviewError").textContent = "";
+        setBusy(true);
+        setStatus("Stopping session", true);
+
+        try {
+          const data = await requestJson(`/interview/${state.sessionId}/stop`, { method: "POST" });
+          $("summary").textContent = data.summary || "No summary returned.";
+          $("summary").classList.remove("empty");
+          state.sessionId = null;
+          renderQuestion(null);
+          setStatus("Stopped", false);
+        } catch (error) {
+          $("interviewError").textContent = error.message;
+          setStatus("Stop failed", true);
+        } finally {
+          setBusy(false);
+          renderSession();
+        }
+      });
+
+      $("loadContextBtn").addEventListener("click", async () => {
+        $("formError").textContent = "";
+        setBusy(true);
+        setStatus("Loading context", true);
+        try {
+          const data = await requestJson("/dev/job-context");
+          if (!data.exists || !data.context) {
+            $("formError").textContent = "job_context.json was not found.";
+            return;
+          }
+          $("jobTitle").value = data.context.job_title || "";
+          $("jobDescription").value = data.context.job_description || "";
+          $("skills").value = (data.context.required_skills || []).join(", ");
+          setStatus("Context loaded", false);
+        } catch (error) {
+          $("formError").textContent = error.message;
+          setStatus("Context failed", false);
+        } finally {
+          setBusy(false);
+          renderSession();
+        }
+      });
+
+      $("resetBtn").addEventListener("click", resetUi);
+
+      renderVoiceMode();
+      resetUi();
+    </script>
+  </body>
+</html>

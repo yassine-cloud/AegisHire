@@ -146,6 +146,7 @@ model RoleMatch {
   compatibilityScore Int?     @map("compatibility_score") @db.SmallInt
   matchedSkills      Json?    @map("matched_skills")
   missingSkills      Json?    @map("missing_skills")
+  explanation        Json?    @map("explanation")
   computedAt         DateTime @default(now()) @map("computed_at")
 
   role Role @relation(fields: [roleId], references: [id])
@@ -199,4 +200,17 @@ model InterviewQuestion {
   session InterviewSession @relation("session_questions", fields: [sessionId], references: [id])
 
   @@map("interview_questions")
+}
+
+model InterviewPhaseReport {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  candidateId String   @map("candidate_id") @db.Text
+  jobOfferId  String   @map("job_offer_id") @db.Text
+  phase       String   @db.VarChar(40)
+  report      Json
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([candidateId, jobOfferId])
+  @@index([phase])
+  @@map("interview_phase_reports")
 }

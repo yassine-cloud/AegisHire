@@ -83,7 +83,7 @@ export function ProfileDashboardShell({
     <div className="mx-auto max-w-7xl">
       <div className="overflow-hidden rounded-[28px] border border-zinc-800/80 bg-zinc-950 text-zinc-50 shadow-2xl shadow-black/40">
         <div className="grid min-h-[calc(100vh-2rem)] lg:grid-cols-[240px_minmax(0,1fr)]">
-          <aside className="border-b border-zinc-800/80 bg-zinc-950 lg:border-b-0 lg:border-r lg:border-zinc-800/80">
+          <aside className="border-b border-zinc-800/80 bg-zinc-950 lg:border-b-0 lg:border-r lg:border-zinc-800/80 lg:sticky lg:top-0 lg:h-screen lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto lg:self-start">
             <div className="flex h-full flex-col p-5">
               <div className="flex items-center gap-3 border-b border-zinc-800/70 pb-5">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-blue-600 text-white shadow-lg shadow-violet-500/20">
@@ -119,6 +119,13 @@ export function ProfileDashboardShell({
                         </button>
                       );
                     })}
+                    <Link
+                      href="/test-gap-report"
+                      className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors text-zinc-300 hover:bg-zinc-900 hover:text-zinc-50"
+                    >
+                      <FlaskConical className="h-4 w-4 text-zinc-400" />
+                      <span className="truncate">Test Gap Report</span>
+                    </Link>
                   </nav>
                 </div>
 
@@ -138,13 +145,6 @@ export function ProfileDashboardShell({
               </div>
 
               <div className="mt-auto space-y-3 pt-5">
-                <Link
-                  href="/test-gap-report"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900/70 px-4 py-3 text-sm text-zinc-200 transition-colors hover:bg-zinc-900 hover:text-white"
-                >
-                  <FlaskConical className="h-4 w-4" />
-                  Test Gap Report
-                </Link>
                 <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-4 text-xs leading-5 text-zinc-400">
                   The sidebar gives quick access to each part of the candidate workflow without leaving the dashboard.
                 </div>

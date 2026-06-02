@@ -13,6 +13,8 @@ import { AdminModule } from './admin/admin.module';
 import { GraphSkillModule } from './graph-skill/graph-skill.module';
 import { AIGenerationModule } from './ai-generation/ai-generation.module';
 import { JobApplicationsModule } from './job-applications/job-applications.module';
+import { ExternalJobsModule } from './external-jobs/external-jobs.module';
+
 
 @Module({
   imports: [
@@ -30,6 +32,7 @@ import { JobApplicationsModule } from './job-applications/job-applications.modul
     GraphSkillModule,
     AIGenerationModule,
     JobApplicationsModule,
+    ExternalJobsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

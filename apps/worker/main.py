@@ -14,7 +14,14 @@ from pathlib import Path
 
 from config import get_settings
 from matching.gap_report_agent import GapReportGenerationError, generate_gap_report
-from matching.schemas import GapReportResult, GenerateReportRequest
+from matching.comparison_agent import compare_candidate_to_role, ComparisonResult
+from matching.explanation_agent import generate_match_explanation, ExplanationResult, MatchScoreExplanationError
+from matching.job_parser_agent import JobParsingError, parse_external_job
+from matching.schemas import (
+    GapReportResult, GenerateReportRequest, 
+    CompareRoleRequest, ExplainMatchScoreRequest,
+    GenerateReportDirectRequest, ParsedJob, ParseJobRequest
+)
 
 # Configure logging
 logging.basicConfig(
@@ -43,6 +50,22 @@ except Exception:
     from .graph_skill.main import router as graph_skill_router
 
 try:
+    from interviewer.router import router as interviewer_router
+except Exception:
+    try:
+        from .interviewer.router import router as interviewer_router
+    except Exception:
+        interviewer_router = None
+
+try:
+    from assessment.router import router as assessment_router
+except Exception:
+    try:
+        from .assessment.router import router as assessment_router
+    except Exception:
+        assessment_router = None
+
+try:
     from cvParser import CVParser
 except ImportError as e:
     print(f"Error importing CVParser: {e}")
@@ -55,6 +78,10 @@ app = FastAPI(
 )
 app.include_router(github_router)
 app.include_router(graph_skill_router)
+if interviewer_router is not None:
+    app.include_router(interviewer_router)
+if assessment_router is not None:
+    app.include_router(assessment_router)
 
 
 
@@ -258,6 +285,119 @@ async def generate_report(payload: GenerateReportRequest) -> GapReportResult:
         ) from exc
     except Exception as exc:
         logger.error(f"Unexpected error during gap report generation: {exc}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Unexpected error: {str(exc)}"
+        ) from exc
+
+
+@app.post("/worker/generate-report/direct", response_model=GapReportResult)
+async def generate_report_direct(payload: GenerateReportDirectRequest) -> GapReportResult:
+    """Generate a gap report from in-memory missing skills without DB role lookup."""
+
+    logger.info(
+        "Received direct gap report request: candidate_id=%s, role_title=%s",
+        payload.candidate_id,
+        payload.role_title,
+    )
+
+    missing_skills = [item.model_dump() for item in payload.missing_skills]
+    if not missing_skills:
+        return GapReportResult(gaps=[], overall_priority_order=[])
+
+    try:
+        result = await run_in_threadpool(
+            generate_gap_report,
+            payload.candidate_id,
+            payload.role_id,
+            missing_skills,
+            payload.role_title,
+        )
+        return result
+    except GapReportGenerationError as exc:
+        logger.error("Direct gap report generation failed: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Gap report generation failed: {str(exc)}",
+        ) from exc
+    except Exception as exc:
+        logger.error("Unexpected error during direct gap report: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Unexpected error: {str(exc)}",
+        ) from exc
+
+
+@app.post("/worker/parse-external-job", response_model=ParsedJob)
+async def parse_external_job_description(payload: ParseJobRequest) -> ParsedJob:
+    """Parse raw external job text into a transient structured job."""
+
+    logger.info("Received external job parse request for company=%s", payload.companyName)
+    try:
+        return await run_in_threadpool(
+            parse_external_job,
+            payload.companyName,
+            payload.jobDescription,
+        )
+    except JobParsingError as exc:
+        logger.error("External job parsing failed: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"External job parsing failed: {str(exc)}",
+        ) from exc
+    except Exception as exc:
+        logger.error("Unexpected error during external job parsing: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Unexpected error: {str(exc)}",
+        ) from exc
+
+
+@app.post("/worker/compare-role", response_model=ComparisonResult)
+async def compare_role(payload: CompareRoleRequest) -> ComparisonResult:
+    """Compare a candidate's skill graph against a role's requirements."""
+    logger.info(f"Received compare role request: candidate_id={payload.candidate_id}, role_id={payload.role_id}")
+    
+    try:
+        result = await run_in_threadpool(
+            compare_candidate_to_role,
+            payload.candidate_id,
+            payload.required_skills,
+            payload.preferred_skills,
+        )
+        logger.info(f"Successfully generated comparison: score={result.compatibility_score}")
+        return result
+    except Exception as exc:
+        logger.error(f"Unexpected error during comparison: {exc}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Unexpected error: {str(exc)}"
+        ) from exc
+
+
+@app.post("/worker/explain-match-score", response_model=ExplanationResult)
+async def explain_match_score(payload: ExplainMatchScoreRequest) -> ExplanationResult:
+    """Explain a match score given the matched and missing skills."""
+    logger.info(f"Received explain match score request: role={payload.role_title}, score={payload.compatibility_score}")
+    
+    try:
+        result = await run_in_threadpool(
+            generate_match_explanation,
+            payload.role_title,
+            payload.compatibility_score,
+            payload.matched_skills,
+            payload.missing_skills,
+        )
+        logger.info(f"Successfully generated explanation")
+        return result
+    except MatchScoreExplanationError as exc:
+        logger.error(f"Match score explanation failed: {exc}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Match score explanation failed: {str(exc)}"
+        ) from exc
+    except Exception as exc:
+        logger.error(f"Unexpected error during explanation generation: {exc}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail=f"Unexpected error: {str(exc)}"

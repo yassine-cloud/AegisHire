@@ -3,8 +3,12 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+
 import { Search } from "lucide-react";
 import { JobCard } from "@/components/JobCard";
+
+import { BriefcaseBusiness, Building2, CalendarDays, MapPin, Search, Sparkles } from "lucide-react";
+
 
 export const metadata = {
   title: "Jobs | AegisHire",
@@ -74,14 +78,23 @@ export default async function JobsPage({
           </div>
 
           <form className="w-full lg:max-w-md">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-              <Input
-                name="q"
-                defaultValue={resolvedSearchParams?.q || ""}
-                placeholder="Search jobs, companies, or locations"
-                className="h-12 border-white/10 bg-white/5 pl-10 text-white placeholder:text-zinc-500"
-              />
+            <div className="space-y-3">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                <Input
+                  name="q"
+                  defaultValue={resolvedSearchParams?.q || ""}
+                  placeholder="Search jobs, companies, or locations"
+                  className="h-12 border-white/10 bg-white/5 pl-10 text-white placeholder:text-zinc-500"
+                />
+              </div>
+              <Link
+                href="/jobs/external"
+                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-white/10 bg-white/10 px-4 text-sm font-medium text-white transition-colors hover:bg-white/15"
+              >
+                <Sparkles className="h-4 w-4" />
+                Analyze an external job
+              </Link>
             </div>
           </form>
         </div>
