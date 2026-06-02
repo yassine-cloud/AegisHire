@@ -4,7 +4,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001'
 
 const roleRouteMap: Record<string, string[]> = {
-  developer: ['/profile', '/jobs', '/test-gap-report', '/dashboard'],
+  developer: ['/profile', '/jobs', '/test-gap-report'],
   company: ['/profile', '/company', '/test-gap-report', '/dashboard'],
   admin: ['/profile', '/admin', '/test-gap-report', '/dashboard'],
 }
