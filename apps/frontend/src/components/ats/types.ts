@@ -8,6 +8,8 @@ export type Candidate = {
   skills: string[];
   matchScore: number;
   resumeSummary: string;
+  generatedEmail?: string | null;
+  generatedLetter?: string | null;
   status: ApplicationStatus;
   appliedAt: string;
 };
@@ -22,6 +24,10 @@ export const MOCK_CANDIDATES: Candidate[] = [
     matchScore: 87,
     resumeSummary:
       '5 years building production React applications at scale. Led the frontend migration from Angular to React at TechCorp, improving bundle size by 40%.',
+    generatedEmail:
+      'Dear Hiring Team,\n\nI am writing to express my strong interest in the Senior Frontend Engineer position. With 5 years of experience building React applications at scale...',
+    generatedLetter:
+      'I am incredibly excited about the opportunity to join TechCorp as a Senior Frontend Engineer. Having followed your work in the developer tools space...',
     status: 'PENDING',
     appliedAt: '2026-05-28',
   },

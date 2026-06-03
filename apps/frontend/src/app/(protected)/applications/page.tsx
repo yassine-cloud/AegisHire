@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, Trash2, ExternalLink } from 'lucide-react';
+import { Loader2, Trash2, ExternalLink, Star, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { apiFetchClient } from '@/lib/api.client';
 
@@ -13,6 +13,8 @@ interface Application {
   jobId: string;
   status: string;
   appliedAt: string;
+  matchScore?: number | null;
+  resumeSummary?: string | null;
   generatedEmail?: string;
   generatedLetter?: string;
   job: {
@@ -149,24 +151,38 @@ export default function ApplicationsPage() {
                 </div>
               </CardHeader>
 
-              {(app.generatedEmail || app.generatedLetter) && (
-                <CardContent className="space-y-3 pt-0">
-                  <div className="border-t pt-3">
-                    <p className="text-xs font-semibold text-muted-foreground mb-2">
-                      GENERATED CONTENT
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {app.generatedEmail && (
-                        <Badge variant="outline">Email Generated</Badge>
-                      )}
-                      {app.generatedLetter && (
-                        <Badge variant="outline">Letter Generated</Badge>
-                      )}
-                    </div>
+              <CardContent className="space-y-3 pt-0">
+                {/* Match score & resume summary */}
+                <div className="border-t pt-3">
+                  <div className="flex flex-wrap items-center gap-4 mb-3">
+                    {app.matchScore != null && (
+                      <div className="flex items-center gap-1.5 text-sm">
+                        <Star className={`h-4 w-4 ${app.matchScore >= 80 ? 'text-emerald-400' : app.matchScore >= 60 ? 'text-amber-400' : 'text-red-400'}`} />
+                        <span className="font-medium">{app.matchScore}% match</span>
+                      </div>
+                    )}
+                    {app.generatedEmail && (
+                      <Badge variant="outline">Email Generated</Badge>
+                    )}
+                    {app.generatedLetter && (
+                      <Badge variant="outline">Motivation Letter</Badge>
+                    )}
                   </div>
 
+                  {app.resumeSummary && (
+                    <details className="text-sm mb-2">
+                      <summary className="cursor-pointer font-medium hover:text-primary flex items-center gap-1.5">
+                        <FileText className="h-3.5 w-3.5" />
+                        Resume Summary
+                      </summary>
+                      <div className="mt-2 bg-gray-50 dark:bg-gray-900 p-3 rounded text-xs whitespace-pre-wrap max-h-48 overflow-y-auto">
+                        {app.resumeSummary}
+                      </div>
+                    </details>
+                  )}
+
                   {app.generatedEmail && (
-                    <details className="text-sm">
+                    <details className="text-sm mb-2">
                       <summary className="cursor-pointer font-medium hover:text-primary">
                         View Generated Email
                       </summary>
@@ -179,15 +195,15 @@ export default function ApplicationsPage() {
                   {app.generatedLetter && (
                     <details className="text-sm">
                       <summary className="cursor-pointer font-medium hover:text-primary">
-                        View Generated Letter
+                        View Motivation Letter
                       </summary>
                       <div className="mt-2 bg-gray-50 dark:bg-gray-900 p-3 rounded text-xs whitespace-pre-wrap max-h-48 overflow-y-auto">
                         {app.generatedLetter}
                       </div>
                     </details>
                   )}
-                </CardContent>
-              )}
+                </div>
+              </CardContent>
 
               <div className="px-6 py-3 bg-gray-50 dark:bg-gray-900/30 flex gap-2">
                 <Button

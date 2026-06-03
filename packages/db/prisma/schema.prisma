@@ -146,6 +146,8 @@ model JobApplication {
   appliedAt       DateTime  @default(now()) @map("applied_at")
   generatedEmail  String?   @map("generated_email") @db.Text
   generatedLetter String?   @map("generated_letter") @db.Text
+  matchScore      Int?      @map("match_score") @db.SmallInt
+  resumeSummary   String?   @map("resume_summary") @db.Text
   customNotes     String?   @map("custom_notes") @db.Text
   archivedAt      DateTime? @map("archived_at")
   createdAt       DateTime  @default(now()) @map("created_at")

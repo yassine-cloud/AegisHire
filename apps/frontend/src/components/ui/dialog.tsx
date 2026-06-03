@@ -1,6 +1,8 @@
 import * as React from "react"
 import { X } from "lucide-react"
 
+import { createPortal } from "react-dom"
+
 interface DialogContextType {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -42,8 +44,14 @@ DialogTrigger.displayName = "DialogTrigger"
 
 const DialogPortal = ({ children }: { children: React.ReactNode }) => {
   const { open } = React.useContext(DialogContext)
-  if (!open) return null
-  return <>{children}</>
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!open || !mounted) return null
+  return createPortal(<>{children}</>, document.body)
 }
 
 const DialogClose = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement>>(

@@ -60,6 +60,85 @@ export class AIGenerationService {
     return result;
   }
 
+  async evaluateApplication(
+    jobDescription: string,
+    candidateSkills: string[],
+  ): Promise<{ matchScore: number; resumeSummary: string }> {
+    const localScore = this.calculateLocalMatchScore(jobDescription, candidateSkills);
+    const localSummary = this.generateLocalResumeSummary(candidateSkills);
+
+    if (!this.groqApiKey) {
+      this.logger.warn('GROQ API key not configured, using local evaluation');
+      return { matchScore: localScore, resumeSummary: localSummary };
+    }
+
+    const prompt = `You are an expert ATS (Applicant Tracking System) AI evaluator.
+Your task is to evaluate a candidate's fit for a job.
+You will be provided with the Job Description and the Candidate's parsed skills.
+
+Job Description:
+${jobDescription}
+
+Candidate Skills:
+${candidateSkills.join(', ')}
+
+Please provide:
+1. A 'matchScore' from 0 to 100 representing how well the candidate's skills match the job description.
+2. A 'resumeSummary' (2-3 sentences) summarizing the candidate's profile in the context of the job, highlighting strengths and missing key skills.
+
+Output exactly a valid JSON object with the keys "matchScore" (integer) and "resumeSummary" (string), and nothing else.`;
+
+    try {
+      const resultStr = await this.callGroqAPI(prompt, 'evaluation');
+      
+      // Attempt to extract JSON from the string, in case it returns markdown \`\`\`json ... \`\`\`
+      const jsonStr = resultStr.replace(/\`\`\`json\n?|\n?\`\`\`/g, '').trim();
+      const result = JSON.parse(jsonStr);
+      const aiScore = typeof result.matchScore === 'number' ? result.matchScore : localScore;
+      const aiSummary = typeof result.resumeSummary === 'string' ? result.resumeSummary : localSummary;
+      return { matchScore: aiScore, resumeSummary: aiSummary };
+    } catch (e) {
+      this.logger.error('Failed to parse AI evaluation, using local evaluation', e);
+      return { matchScore: localScore, resumeSummary: localSummary };
+    }
+  }
+
+  private skillMatchesDescription(skill: string, desc: string): boolean {
+    const s = skill.toLowerCase().trim();
+    if (!s || s.length < 2) return false;
+
+    if (desc.includes(s)) return true;
+
+    const normalized = s.replace(/[-._/\\]/g, '');
+    if (normalized !== s && desc.includes(normalized)) return true;
+
+    const words = s.split(/[-._/\\\s]+/).filter((w) => w.length > 1);
+    if (words.length > 1) {
+      const matchedWords = words.filter((w) => desc.includes(w));
+      if (matchedWords.length >= Math.ceil(words.length / 2)) return true;
+    }
+
+    return false;
+  }
+
+  private calculateLocalMatchScore(jobDescription: string, candidateSkills: string[]): number {
+    if (!candidateSkills || candidateSkills.length === 0) return 0;
+
+    const descLower = jobDescription.toLowerCase();
+    const matched = candidateSkills.filter((skill) =>
+      this.skillMatchesDescription(skill, descLower),
+    );
+
+    return Math.round((matched.length / candidateSkills.length) * 100);
+  }
+
+  private generateLocalResumeSummary(candidateSkills: string[]): string {
+    if (!candidateSkills || candidateSkills.length === 0) {
+      return 'No skills data available for this candidate.';
+    }
+    return `The candidate has skills in ${candidateSkills.join(', ')}.`;
+  }
+
   private async generateEmail(dto: GenerateLetterDto): Promise<string> {
     const prompt = this.buildEmailPrompt(dto);
     return this.callGroqAPI(prompt, 'email');
@@ -143,7 +222,7 @@ Generate the motivation letter:`;
 
   private async callGroqAPI(
     prompt: string,
-    type: 'email' | 'motivation-letter',
+    type: 'email' | 'motivation-letter' | 'evaluation',
   ): Promise<string> {
     try {
       const response = await axios.post<GroqChatCompletionResponse>(
