@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { LayoutDashboard } from "lucide-react";
+import ATSNavbar from "@/components/ats/ATSNavbar";
 import ATSMetricsCards from "@/components/ats/ATSMetricsCards";
 import CandidatePipelineBoard from "@/components/ats/CandidatePipelineBoard";
 import CandidatePreviewModal from "@/components/ats/CandidatePreviewModal";
@@ -17,6 +18,7 @@ export default function ATSDashboardPage() {
       .then((data) => setCandidates(data))
       .catch(() => setCandidates([]));
   }, []);
+
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
 
   const handleStageChange = useCallback(
@@ -43,6 +45,8 @@ export default function ATSDashboardPage() {
         <div className="absolute left-[5%] top-[10%] h-[40%] w-[40%] rounded-full bg-violet-600/5 blur-[100px]" />
         <div className="absolute bottom-[20%] right-[5%] h-[45%] w-[45%] rounded-full bg-blue-600/5 blur-[100px]" />
       </div>
+
+      <ATSNavbar />
 
       <div className="relative z-10 mx-auto max-w-screen-xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Page header */}

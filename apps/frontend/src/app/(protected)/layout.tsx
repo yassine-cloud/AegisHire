@@ -83,14 +83,24 @@ export default async function ProtectedLayout({
                 </Link>
               )}
               {(accountType === 'company') && (
-                <Link href="/company" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
-                  Company
-                </Link>
+                <>
+                  <Link href="/company" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
+                    Company
+                  </Link>
+                  <Link href="/dashboard/ats" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
+                    ATS Dashboard
+                  </Link>
+                </>
               )}
               {accountType === 'admin' && (
-                <Link href="/admin" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
-                  Admin
-                </Link>
+                <>
+                  <Link href="/admin" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
+                    Users
+                  </Link>
+                  <Link href="/admin/companies" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
+                    Companies
+                  </Link>
+                </>
               )}
               <form action="/auth/login" method="GET">
                 <button className="text-sm font-medium text-zinc-400 hover:text-white transition-colors" formAction={async () => {

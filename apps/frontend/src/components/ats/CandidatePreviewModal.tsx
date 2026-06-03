@@ -1,6 +1,6 @@
 "use client";
 
-import { X, Star, Briefcase, CalendarDays } from "lucide-react";
+import { X, Star, Briefcase, CalendarDays, Mail } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Candidate } from "./types";
@@ -58,7 +58,7 @@ export default function CandidatePreviewModal({
         </div>
 
         {/* Body */}
-        <div className="space-y-5 p-5">
+        <div className="space-y-5 p-5 max-h-[70vh] overflow-y-auto">
           {/* Status + match score row */}
           <div className="flex flex-wrap items-center gap-3">
             <span
@@ -80,27 +80,60 @@ export default function CandidatePreviewModal({
           </div>
 
           {/* Skills */}
-          <div className="space-y-2">
-            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-              Skills
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {candidate.skills.map((skill) => (
-                <Badge key={skill} variant="secondary" className="text-xs">
-                  {skill}
-                </Badge>
-              ))}
+          {candidate.skills && candidate.skills.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                Skills
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {candidate.skills.map((skill) => (
+                  <Badge key={skill} variant="secondary" className="text-xs">
+                    {skill}
+                  </Badge>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Resume summary */}
+          {candidate.resumeSummary && (
+            <div className="space-y-2">
+              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                Resume Summary
+              </p>
+              <p className="text-sm leading-6 text-zinc-300">
+                {candidate.resumeSummary}
+              </p>
+            </div>
+          )}
+
+          {/* Generated Email */}
+          <div className="space-y-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 flex items-center gap-1.5">
+              <Mail className="h-3 w-3" />
+              Generated Email
+            </p>
+            {candidate.generatedEmail ? (
+              <div className="text-sm leading-6 text-zinc-300 whitespace-pre-wrap rounded-md bg-zinc-800/50 p-4">
+                {candidate.generatedEmail}
+              </div>
+            ) : (
+              <p className="text-sm italic text-zinc-600">No generated email available</p>
+            )}
+          </div>
+
+          {/* Motivation letter */}
           <div className="space-y-2">
             <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-              Resume Summary
+              Motivation Letter
             </p>
-            <p className="text-sm leading-6 text-zinc-300">
-              {candidate.resumeSummary}
-            </p>
+            {candidate.motivationLetter ? (
+              <div className="text-sm leading-6 text-zinc-300 whitespace-pre-wrap rounded-md bg-zinc-800/50 p-4">
+                {candidate.motivationLetter}
+              </div>
+            ) : (
+              <p className="text-sm italic text-zinc-600">No motivation letter available</p>
+            )}
           </div>
         </div>
       </div>
